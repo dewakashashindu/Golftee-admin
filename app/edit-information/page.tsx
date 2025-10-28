@@ -94,8 +94,27 @@ export default function EditInformation() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
+            Notifications
+            {/* Unread badge */}
+            <span style={{
+              position: 'absolute',
+              top: '-6px',
+              right: '-12px',
+              background: '#dc2626',
+              color: 'white',
+              borderRadius: '50%',
+              padding: '2px 7px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              zIndex: 2,
+              minWidth: '22px',
+              textAlign: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
+            }}>3</span>
+          </a>
           <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
-            <span>Notifications</span>
+            <span>Quick View</span>
             {showNotificationCard && (
               <div className="notification-card">
                 <div className="notification-card-header">
@@ -125,15 +144,28 @@ export default function EditInformation() {
                   </div>
                 </div>
                 <div className="notification-card-footer">
-                  <button className="notification-btn view-all-btn">View All</button>
-                  <button className="notification-btn mark-read-btn">Mark All Read</button>
+                    <button
+                      className="notification-btn view-all-btn"
+                      onClick={() => window.location.href = "/notifications"}
+                    >
+                      View All
+                    </button>
+                  <button
+                    className="notification-btn mark-read-btn"
+                    onClick={() => {
+                      alert("All notifications marked as read!");
+                      setShowNotificationCard(false);
+                    }}
+                  >
+                    Mark All Read
+                  </button>
                 </div>
               </div>
             )}
           </div>
           <div className="nav-link nav-dropdown" onClick={() => setShowSettingsDropdown((v) => !v)} tabIndex={0} onBlur={() => setShowSettingsDropdown(false)} style={{ position: 'relative' }}>
             <span>Settings <span className={`dropdown-arrow${showSettingsDropdown ? ' open' : ''}`}>▼</span></span>
-            {showSettingsDropdown && (
+           {showSettingsDropdown && (
               <div className="dropdown-menu" tabIndex={-1}>
                 <Link href="/reset-password" className="dropdown-item">
                   <svg className="dropdown-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="16" height="16">
@@ -177,9 +209,9 @@ export default function EditInformation() {
                 <button className="profile-btn cancel-btn" onClick={() => setShowProfileCard(false)}>
                   Cancel
                 </button>
-                <Link href="/login" className="profile-btn logout-btn">
+                <button className="profile-btn logout-btn" onClick={() => window.location.href = "/login"}>
                   Logout
-                </Link>
+                </button>
               </div>
             </div>
           )}

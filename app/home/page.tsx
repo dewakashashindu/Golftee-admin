@@ -1,6 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+const sampleNotifications = [
+  { id: '1', isRead: false },
+  { id: '2', isRead: false },
+  { id: '3', isRead: true },
+  { id: '4', isRead: true },
+  { id: '5', isRead: false },
+  { id: '6', isRead: true },
+  { id: '7', isRead: false },
+  { id: '8', isRead: true },
+];
 
 export default function HomePage() {
   const [showProfileCard, setShowProfileCard] = useState(false);
@@ -19,8 +29,27 @@ export default function HomePage() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
+            Notifications
+            {/* Unread badge */}
+            <span style={{
+              position: 'absolute',
+              top: '-6px',
+              right: '-12px',
+              background: '#dc2626',
+              color: 'white',
+              borderRadius: '50%',
+              padding: '2px 7px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              zIndex: 2,
+              minWidth: '22px',
+              textAlign: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
+            }}>3</span>
+          </a>
           <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
-            <span>Notifications</span>
+            <span>Quick View</span>
             {showNotificationCard && (
               <div className="notification-card">
                 <div className="notification-card-header">
@@ -50,8 +79,21 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="notification-card-footer">
-                  <button className="notification-btn view-all-btn">View All</button>
-                  <button className="notification-btn mark-read-btn">Mark All Read</button>
+                    <Link href="/notifications">
+                    <button className="notification-btn view-all-btn">View All</button>
+                    </Link>
+                  <button
+                    className="notification-btn mark-read-btn"
+                    onClick={() => {
+                      // Mark all unread notifications as read
+                      sampleNotifications.forEach(n => {
+                        if (!n.isRead) n.isRead = true;
+                      });
+                      setShowNotificationCard(false); // Optionally close the card
+                    }}
+                  >
+                    Mark All Read
+                  </button>
                 </div>
               </div>
             )}
@@ -152,7 +194,11 @@ export default function HomePage() {
         <div className="footer-content">
           <div className="footer-column footer-about">
             <div className="footer-logo-container">
-              <img src="/main.png" alt="GolfTee Logo" className="footer-logo" />
+              <img 
+              src="/icon.png" 
+              alt="GolfTee logo featuring a stylized golf ball and tee, set against a green background representing a golf course. The logo conveys a professional and welcoming atmosphere. If text is present, it reads GolfTee." 
+              className="footer-logo" 
+              />
             </div>
             <h2 className="footer-brand">GolfTee</h2>
             <p className="footer-tagline">Golf Club Management System</p>
@@ -314,12 +360,12 @@ export default function HomePage() {
         }
         
         .navigation {
-          position: relative;
-          z-index: 1001;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.5rem 4rem;
+          padding: 2.5rem 3.5rem 1.5rem 3.5rem;
+          position: relative;
+          z-index: 1001;
         }
         
         .nav-links {
@@ -328,15 +374,15 @@ export default function HomePage() {
         }
         
         .nav-link {
-          font-size: 1.125rem;
+          font-size: 1.35rem;
           font-weight: 500;
           color: #111;
+          cursor: pointer;
           text-decoration: none;
-          position: relative;
           padding: 0.5rem 1rem;
-          border-radius: 8px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          transform: translateY(0);
+          border-radius: 6px;
+          transition: all 0.2s;
+          position: relative;
         }
         .nav-dropdown {
           display: inline-block;
@@ -1061,22 +1107,40 @@ export default function HomePage() {
           align-items: center;
         }
         
-        .star {
-          font-size: 1.2rem;
-          cursor: pointer;
-          transition: transform 0.2s ease, opacity 0.2s ease;
-          opacity: 0.3;
-        }
-        
-        .star:hover,
-        .star.active {
-          opacity: 1;
-          transform: scale(1.1);
-        }
-        
-        .star:hover ~ .star {
-          opacity: 0.3;
-        }
+        const unreadCount = sampleNotifications.filter(n => !n.isRead).length;
+        return (
+          <div className="main-container">
+            {/* Background Circles */}
+            <div className="bg-circle-left" />
+            <div className="bg-circle-right" />
+            {/* Top Navigation */}
+            <nav className="navigation">
+              <div className="nav-links">
+                <a href="/home" className="nav-link">Home</a>
+                <a href="/bookings" className="nav-link">Bookings</a>
+                <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
+                  Notifications
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-18px',
+                      background: '#dc2626',
+                      color: 'white',
+                      borderRadius: '12px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      minWidth: '24px',
+                      textAlign: 'center',
+                      zIndex: 2
+                    }}>{unreadCount}</span>
+                  )}
+                </a>
+                <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
+                  <span>Quick View</span>
+                  {showNotificationCard && (
+                    <div className="notification-card">
         
         .review-textarea {
           padding: 0.75rem 1rem;
@@ -1126,7 +1190,8 @@ export default function HomePage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          background: rgba(0, 0, 0, 0.2);
+          background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+          color: #fff;
         }
         
         .footer-brand-icon {

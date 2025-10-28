@@ -24,6 +24,7 @@ ChartJS.register(
 export default function AnalyticsPage() {
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [showNotificationCard, setShowNotificationCard] = useState(false);
+  const [customDate, setCustomDate] = useState('');
   const [chartData, setChartData] = useState({
     labels: ['Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21'],
     datasets: [
@@ -57,6 +58,10 @@ export default function AnalyticsPage() {
     } else if (range === 'month') {
       labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
       data = generateRandomData(4);
+    } else if (range === 'custom') {
+      // For custom date, show hourly slots for the selected date
+      labels = ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'];
+      data = generateRandomData(6);
     }
 
     setChartData({
@@ -121,10 +126,29 @@ export default function AnalyticsPage() {
       {/* Top Navigation */}
       <nav className="navigation">
         <div className="nav-links">
-          <a href="/" className="nav-link">Home</a>
+          <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
+            Notifications
+            {/* Unread badge */}
+            <span style={{
+              position: 'absolute',
+              top: '-6px',
+              right: '-12px',
+              background: '#dc2626',
+              color: 'white',
+              borderRadius: '50%',
+              padding: '2px 7px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              zIndex: 2,
+              minWidth: '22px',
+              textAlign: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
+            }}>3</span>
+          </a>
           <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
-            <span>Notifications</span>
+            <span>Quick View</span>
             {showNotificationCard && (
               <div className="notification-card">
                 <div className="notification-card-header">
@@ -154,8 +178,19 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="notification-card-footer">
-                  <button className="notification-btn view-all-btn">View All</button>
-                  <button className="notification-btn mark-read-btn">Mark All Read</button>
+                    <Link href="/notifications" passHref>
+                    <button className="notification-btn view-all-btn">View All</button>
+                    </Link>
+                    <button
+                    className="notification-btn mark-read-btn"
+                    onClick={() => {
+                      // Mark all notifications as read (simulate by hiding badge)
+                      const badge = document.querySelector('.nav-link .notification-section ~ span');
+                      setShowNotificationCard(false);
+                    }}
+                    >
+                    Mark All Read
+                    </button>
                 </div>
               </div>
             )}
@@ -254,6 +289,16 @@ export default function AnalyticsPage() {
             >
               This Month
             </button>
+            <input
+              type="date"
+              className="time-btn"
+              value={customDate}
+              onChange={e => {
+                setCustomDate(e.target.value);
+                updateChartData('custom');
+              }}
+              style={{ minWidth: '140px', padding: '0.5rem 1rem', fontSize: '0.9rem', border: '2px solid #d1d5db', borderRadius: '6px', fontWeight: 500, color: '#374151', background: 'white', cursor: 'pointer' }}
+            />
           </div>
         </div>
         <div className="chart-area">

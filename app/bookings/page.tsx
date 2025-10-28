@@ -137,10 +137,29 @@ export default function BookingsPage() {
       {/* Top Navigation */}
       <nav className="navigation">
         <div className="nav-links">
-          <a href="/" className="nav-link">Home</a>
+          <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
+            Notifications
+            {/* Unread badge */}
+            <span style={{
+              position: 'absolute',
+              top: '-6px',
+              right: '-12px',
+              background: '#dc2626',
+              color: 'white',
+              borderRadius: '50%',
+              padding: '2px 7px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              zIndex: 2,
+              minWidth: '22px',
+              textAlign: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
+            }}>3</span>
+          </a>
           <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
-            <span>Notifications</span>
+            <span>Quick View</span>
             {showNotificationCard && (
               <div className="notification-card">
                 <div className="notification-card-header">
@@ -170,8 +189,22 @@ export default function BookingsPage() {
                   </div>
                 </div>
                 <div className="notification-card-footer">
-                  <button className="notification-btn view-all-btn">View All</button>
-                  <button className="notification-btn mark-read-btn">Mark All Read</button>
+                  <button
+                    className="notification-btn view-all-btn"
+                    onClick={() => window.location.href = '/notifications'}
+                  >
+                    View All
+                  </button>
+                    <button
+                    className="notification-btn mark-read-btn"
+                    onClick={() => {
+                      // Simulate marking all notifications as read
+                      alert("All notifications marked as read.");
+                      setShowNotificationCard(false);
+                    }}
+                    >
+                    Mark All Read
+                    </button>
                 </div>
               </div>
             )}
