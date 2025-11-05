@@ -266,7 +266,14 @@ export default function BookingsPage() {
       <div className="main-content">
         <div className="page-header">
           <div className="header-top">
-            <h1 className="page-title">All Bookings</h1>
+            <h1 className="page-title">
+              {filterType === 'all' && 'All Bookings'}
+              {filterType === 'today' && 'Today\'s Bookings'}
+              {filterType === 'week' && 'This Week\'s Bookings'}
+              {filterType === 'month' && 'This Month\'s Bookings'}
+              {filterType === 'custom' && customDate && `Bookings for ${new Date(customDate).toLocaleDateString()}`}
+              {filterType === 'custom' && !customDate && 'Custom Date Bookings'}
+            </h1>
             
             {/* Filter Dropdown */}
             <div className="filter-dropdown">

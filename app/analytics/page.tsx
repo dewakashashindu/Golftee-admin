@@ -25,6 +25,7 @@ export default function AnalyticsPage() {
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [showNotificationCard, setShowNotificationCard] = useState(false);
   const [customDate, setCustomDate] = useState('');
+  const [customRevenueDate, setCustomRevenueDate] = useState('');
   const [chartData, setChartData] = useState({
     labels: ['Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21'],
     datasets: [
@@ -39,10 +40,30 @@ export default function AnalyticsPage() {
     ],
   });
 
+  const [revenueChartData, setRevenueChartData] = useState({
+    labels: ['Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21'],
+    datasets: [
+      {
+        label: 'Revenue',
+        data: [480, 1200, 800, 1080, 1400, 1280],
+        backgroundColor: '#22c55e',
+        borderColor: '#16a34a',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+    ],
+  });
+
   const [timeRange, setTimeRange] = useState('week');
+  const [revenueTimeRange, setRevenueTimeRange] = useState('week');
+  const [totalRevenue, setTotalRevenue] = useState(6840); // Initialize with default week total
 
   const generateRandomData = (length: number) => {
     return Array.from({ length }, () => Math.floor(Math.random() * 40) + 5);
+  };
+
+  const generateRandomRevenueData = (length: number) => {
+    return Array.from({ length }, () => Math.floor(Math.random() * 1000) + 200);
   };
 
   const updateChartData = (range: string) => {
@@ -78,6 +99,46 @@ export default function AnalyticsPage() {
       ],
     });
     setTimeRange(range);
+  };
+
+  const updateRevenueChartData = (range: string) => {
+    let labels: string[] = [];
+    let data: number[] = [];
+
+    if (range === 'day') {
+      labels = ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'];
+      data = generateRandomRevenueData(6);
+    } else if (range === 'week') {
+      labels = ['Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21'];
+      data = generateRandomRevenueData(6);
+    } else if (range === 'month') {
+      labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      data = generateRandomRevenueData(4);
+    } else if (range === 'custom') {
+      // For custom date, show hourly slots for the selected date
+      labels = ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'];
+      data = generateRandomRevenueData(6);
+    }
+
+    setRevenueChartData({
+      labels,
+      datasets: [
+        {
+          label: 'Revenue',
+          data,
+          backgroundColor: '#22c55e',
+          borderColor: '#16a34a',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    });
+    
+    // Calculate total revenue for the selected period
+    const total = data.reduce((sum, value) => sum + value, 0);
+    setTotalRevenue(total);
+    
+    setRevenueTimeRange(range);
   };
 
   const chartOptions = {
@@ -303,6 +364,241 @@ export default function AnalyticsPage() {
         </div>
         <div className="chart-area">
           <Bar data={chartData} options={chartOptions} />
+        </div>
+      </div>
+
+      {/* Revenue History Chart */}
+      <div className="chart-container">
+        <div className="chart-header">
+          <div className="chart-title-section">
+            <div className="chart-title">Revenue History</div>
+            <div className="revenue-calculator">
+              <div className="calculator-label">Total Revenue:</div>
+              <div className="calculator-value">${totalRevenue.toLocaleString()}</div>
+              <div className="calculator-period">
+                {revenueTimeRange === 'day' && 'Today'}
+                {revenueTimeRange === 'week' && 'This Week'}
+                {revenueTimeRange === 'month' && 'This Month'}
+                {revenueTimeRange === 'custom' && customRevenueDate && `On ${new Date(customRevenueDate).toLocaleDateString()}`}
+                {revenueTimeRange === 'custom' && !customRevenueDate && 'Custom Date'}
+              </div>
+            </div>
+          </div>
+          <div className="chart-controls">
+            <button 
+              className={`time-btn ${revenueTimeRange === 'day' ? 'active' : ''}`}
+              onClick={() => updateRevenueChartData('day')}
+            >
+              Today
+            </button>
+            <button 
+              className={`time-btn ${revenueTimeRange === 'week' ? 'active' : ''}`}
+              onClick={() => updateRevenueChartData('week')}
+            >
+              This Week
+            </button>
+            <button 
+              className={`time-btn ${revenueTimeRange === 'month' ? 'active' : ''}`}
+              onClick={() => updateRevenueChartData('month')}
+            >
+              This Month
+            </button>
+            <input
+              type="date"
+              className="time-btn"
+              value={customRevenueDate}
+              onChange={e => {
+                setCustomRevenueDate(e.target.value);
+                updateRevenueChartData('custom');
+              }}
+              style={{ minWidth: '140px', padding: '0.5rem 1rem', fontSize: '0.9rem', border: '2px solid #d1d5db', borderRadius: '6px', fontWeight: 500, color: '#374151', background: 'white', cursor: 'pointer' }}
+            />
+          </div>
+        </div>
+        <div className="chart-area">
+          <Bar data={revenueChartData} options={chartOptions} />
+        </div>
+      </div>
+
+      {/* Review Analysis Section */}
+      <div className="review-analysis-container">
+        <div className="review-header">
+          <h2 className="review-title">Customer Reviews Analysis</h2>
+          <div className="overall-rating">
+            <div className="rating-score">4.6</div>
+            <div className="rating-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span key={star} className={`star ${star <= 4.6 ? 'filled' : star - 1 < 4.6 ? 'half-filled' : ''}`}>
+                  ★
+                </span>
+              ))}
+            </div>
+            <div className="rating-count">Based on 1,247 reviews</div>
+          </div>
+        </div>
+
+        <div className="review-stats">
+          <div className="rating-breakdown">
+            <h3>Rating Breakdown</h3>
+            <div className="rating-bars">
+              <div className="rating-bar">
+                <span className="rating-label">5 stars</span>
+                <div className="bar-container">
+                  <div className="bar-fill" style={{ width: '65%', backgroundColor: '#22c55e' }}></div>
+                </div>
+                <span className="rating-percentage">65%</span>
+              </div>
+              <div className="rating-bar">
+                <span className="rating-label">4 stars</span>
+                <div className="bar-container">
+                  <div className="bar-fill" style={{ width: '20%', backgroundColor: '#84cc16' }}></div>
+                </div>
+                <span className="rating-percentage">20%</span>
+              </div>
+              <div className="rating-bar">
+                <span className="rating-label">3 stars</span>
+                <div className="bar-container">
+                  <div className="bar-fill" style={{ width: '10%', backgroundColor: '#eab308' }}></div>
+                </div>
+                <span className="rating-percentage">10%</span>
+              </div>
+              <div className="rating-bar">
+                <span className="rating-label">2 stars</span>
+                <div className="bar-container">
+                  <div className="bar-fill" style={{ width: '3%', backgroundColor: '#f97316' }}></div>
+                </div>
+                <span className="rating-percentage">3%</span>
+              </div>
+              <div className="rating-bar">
+                <span className="rating-label">1 star</span>
+                <div className="bar-container">
+                  <div className="bar-fill" style={{ width: '2%', backgroundColor: '#ef4444' }}></div>
+                </div>
+                <span className="rating-percentage">2%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="review-highlights">
+            <h3>Review Highlights</h3>
+            <div className="highlight-tags">
+              <span className="highlight-tag positive">Excellent Course Condition</span>
+              <span className="highlight-tag positive">Professional Staff</span>
+              <span className="highlight-tag positive">Beautiful Scenery</span>
+              <span className="highlight-tag positive">Well Maintained Greens</span>
+              <span className="highlight-tag neutral">Pricing</span>
+              <span className="highlight-tag negative">Booking System</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="recent-reviews">
+          <h3>Recent Reviews</h3>
+          <div className="reviews-grid">
+            <div className="review-card">
+              <div className="review-header-card">
+                <div className="reviewer-info">
+                  <div className="reviewer-avatar">JD</div>
+                  <div className="reviewer-details">
+                    <div className="reviewer-name">John Davies</div>
+                    <div className="review-date">2 days ago</div>
+                  </div>
+                </div>
+                <div className="review-rating">
+                  <div className="review-stars">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={`star ${star <= 5 ? 'filled' : ''}`}>★</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="review-content">
+                "Absolutely stunning golf course! The greens are in perfect condition and the staff is incredibly professional. The booking process was smooth and the facilities are top-notch. Will definitely be coming back!"
+              </div>
+              <div className="review-tags">
+                <span className="tag">Course Condition</span>
+                <span className="tag">Staff Service</span>
+              </div>
+            </div>
+
+            <div className="review-card">
+              <div className="review-header-card">
+                <div className="reviewer-info">
+                  <div className="reviewer-avatar">SM</div>
+                  <div className="reviewer-details">
+                    <div className="reviewer-name">Sarah Mitchell</div>
+                    <div className="review-date">5 days ago</div>
+                  </div>
+                </div>
+                <div className="review-rating">
+                  <div className="review-stars">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={`star ${star <= 4 ? 'filled' : ''}`}>★</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="review-content">
+                "Great course with beautiful scenery. The facilities are well-maintained and the caddies are very knowledgeable. Only minor issue was the wait time at the clubhouse restaurant."
+              </div>
+              <div className="review-tags">
+                <span className="tag">Scenery</span>
+                <span className="tag">Facilities</span>
+              </div>
+            </div>
+
+            <div className="review-card">
+              <div className="review-header-card">
+                <div className="reviewer-info">
+                  <div className="reviewer-avatar">RP</div>
+                  <div className="reviewer-details">
+                    <div className="reviewer-name">Robert Park</div>
+                    <div className="review-date">1 week ago</div>
+                  </div>
+                </div>
+                <div className="review-rating">
+                  <div className="review-stars">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={`star ${star <= 5 ? 'filled' : ''}`}>★</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="review-content">
+                "Exceptional golf experience! The course layout is challenging yet fair, and the views are breathtaking. Staff went above and beyond to make our tournament memorable."
+              </div>
+              <div className="review-tags">
+                <span className="tag">Course Layout</span>
+                <span className="tag">Tournament</span>
+              </div>
+            </div>
+
+            <div className="review-card">
+              <div className="review-header-card">
+                <div className="reviewer-info">
+                  <div className="reviewer-avatar">AL</div>
+                  <div className="reviewer-details">
+                    <div className="reviewer-name">Amanda Lee</div>
+                    <div className="review-date">1 week ago</div>
+                  </div>
+                </div>
+                <div className="review-rating">
+                  <div className="review-stars">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={`star ${star <= 4 ? 'filled' : ''}`}>★</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="review-content">
+                "Good course overall with nice amenities. The pro shop has a great selection. Could improve the pace of play management during busy periods."
+              </div>
+              <div className="review-tags">
+                <span className="tag">Amenities</span>
+                <span className="tag">Pro Shop</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <style jsx>{`
@@ -668,7 +964,7 @@ export default function AnalyticsPage() {
         .chart-container {
           background: #ededed;
           border-radius: 10px;
-          margin: 0 auto;
+          margin: 0 auto 2.5rem auto;
           width: 900px;
           max-width: 98vw;
           padding: 2.2rem 2.2rem 1.5rem 2.2rem;
@@ -682,9 +978,43 @@ export default function AnalyticsPage() {
           align-items: center;
           margin-bottom: 1.5rem;
         }
+        .chart-title-section {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+        }
         .chart-title {
           font-size: 1.3rem;
           font-weight: 600;
+        }
+        .revenue-calculator {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+          min-width: 180px;
+        }
+        .calculator-label {
+          font-size: 0.9rem;
+          font-weight: 500;
+          opacity: 0.9;
+          margin-bottom: 0.3rem;
+        }
+        .calculator-value {
+          font-size: 1.8rem;
+          font-weight: 700;
+          margin-bottom: 0.2rem;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .calculator-period {
+          font-size: 0.8rem;
+          font-weight: 400;
+          opacity: 0.8;
+          text-transform: capitalize;
         }
         .chart-controls {
           display: flex;
@@ -733,7 +1063,270 @@ export default function AnalyticsPage() {
             gap: 1rem;
             align-items: flex-start;
           }
+          .chart-title-section {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+          }
+          .revenue-calculator {
+            min-width: auto;
+            width: 100%;
+            text-align: center;
+            align-items: center;
+          }
         }
+        /* Review Analysis Styles */
+        .review-analysis-container {
+          background: #ededed;
+          border-radius: 10px;
+          margin: 0 auto 2.5rem auto;
+          width: 900px;
+          max-width: 98vw;
+          padding: 2.2rem;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+          position: relative;
+          z-index: 10;
+        }
+        
+        .review-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          padding-bottom: 1rem;
+          border-bottom: 2px solid #d1d5db;
+        }
+        
+        .review-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #111;
+          margin: 0;
+        }
+        
+        .overall-rating {
+          text-align: center;
+        }
+        
+        .rating-score {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: #16a34a;
+          margin-bottom: 0.25rem;
+        }
+        
+        .rating-stars {
+          display: flex;
+          gap: 0.1rem;
+          justify-content: center;
+          margin-bottom: 0.25rem;
+        }
+        
+        .star {
+          font-size: 1.2rem;
+          color: #d1d5db;
+          transition: color 0.2s;
+        }
+        
+        .star.filled {
+          color: #fbbf24;
+        }
+        
+        .star.half-filled {
+          background: linear-gradient(90deg, #fbbf24 50%, #d1d5db 50%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .rating-count {
+          font-size: 0.85rem;
+          color: #6b7280;
+        }
+        
+        .review-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          margin-bottom: 2rem;
+        }
+        
+        .rating-breakdown h3,
+        .review-highlights h3 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #111;
+          margin: 0 0 1rem 0;
+        }
+        
+        .rating-bars {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        
+        .rating-bar {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 0.85rem;
+        }
+        
+        .rating-label {
+          min-width: 50px;
+          color: #374151;
+          font-weight: 500;
+        }
+        
+        .bar-container {
+          flex: 1;
+          height: 8px;
+          background: #e5e7eb;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        
+        .bar-fill {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 0.3s ease;
+        }
+        
+        .rating-percentage {
+          min-width: 35px;
+          text-align: right;
+          color: #6b7280;
+          font-weight: 500;
+        }
+        
+        .highlight-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        
+        .highlight-tag {
+          padding: 0.4rem 0.8rem;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 500;
+          text-transform: capitalize;
+        }
+        
+        .highlight-tag.positive {
+          background: #dcfce7;
+          color: #16a34a;
+          border: 1px solid #bbf7d0;
+        }
+        
+        .highlight-tag.neutral {
+          background: #fef3c7;
+          color: #d97706;
+          border: 1px solid #fed7aa;
+        }
+        
+        .highlight-tag.negative {
+          background: #fee2e2;
+          color: #dc2626;
+          border: 1px solid #fecaca;
+        }
+        
+        .recent-reviews h3 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #111;
+          margin: 0 0 1rem 0;
+        }
+        
+        .reviews-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        
+        .review-card {
+          background: white;
+          border-radius: 10px;
+          padding: 1.25rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          border: 1px solid #e5e7eb;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .review-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .review-header-card {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem;
+        }
+        
+        .reviewer-info {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        
+        .reviewer-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: #16a34a;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+        
+        .reviewer-name {
+          font-weight: 600;
+          color: #111;
+          font-size: 0.9rem;
+        }
+        
+        .review-date {
+          font-size: 0.75rem;
+          color: #6b7280;
+        }
+        
+        .review-rating .review-stars {
+          display: flex;
+          gap: 0.1rem;
+        }
+        
+        .review-rating .star {
+          font-size: 0.9rem;
+        }
+        
+        .review-content {
+          color: #374151;
+          line-height: 1.5;
+          margin-bottom: 0.75rem;
+          font-size: 0.9rem;
+        }
+        
+        .review-tags {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        
+        .tag {
+          padding: 0.2rem 0.6rem;
+          background: #f3f4f6;
+          color: #6b7280;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+
         @media (max-width: 800px) {
           .navigation {
             flex-direction: column;
@@ -775,6 +1368,35 @@ export default function AnalyticsPage() {
           .time-btn {
             padding: 0.4rem 0.8rem;
             font-size: 0.8rem;
+          }
+          
+          /* Review Analysis Mobile Styles */
+          .review-analysis-container {
+            width: 99vw;
+            padding: 1rem;
+          }
+          
+          .review-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+          }
+          
+          .review-stats {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+          
+          .reviews-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .review-card {
+            padding: 1rem;
+          }
+          
+          .highlight-tags {
+            justify-content: center;
           }
         }
       `}</style>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function ResetPasswordPage() {
   const [oldPassword, setOldPassword] = useState("");
@@ -74,8 +75,21 @@ export default function ResetPasswordPage() {
                 required
               />
             </div>
-            <button type="submit" className="login-button">Conform</button>
+            <button type="submit" className="login-button">Confirm</button>
           </form>
+          
+          <div className="card-footer">
+            <p className="back-to-login">
+              Remember your password?{" "}
+              <span 
+                onClick={() => router.push("/login")} 
+                className="login-link"
+                style={{ cursor: 'pointer' }}
+              >
+                Back to Login
+              </span>
+            </p>
+          </div>
         </div>
         {/* Welcome Card */}
         <div className="welcome-card">
@@ -247,6 +261,25 @@ export default function ResetPasswordPage() {
           margin-bottom: 1.8rem;
           opacity: 0.95;
           line-height: 1.3;
+        }
+        .card-footer {
+          text-align: center;
+          margin-top: 1.5rem;
+        }
+        .back-to-login {
+          font-size: 0.9rem;
+          color: #6b7280;
+          margin: 0;
+        }
+        .login-link {
+          color: #22c55e;
+          text-decoration: none;
+          font-weight: 600;
+          transition: color 0.2s;
+        }
+        .login-link:hover {
+          color: #16a34a;
+          text-decoration: underline;
         }
         @media (max-width: 768px) {
           .cards-container {
