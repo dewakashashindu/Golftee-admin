@@ -29,6 +29,7 @@ export default function HomePage() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications
             {/* Unread badge */}
@@ -160,24 +161,45 @@ export default function HomePage() {
             Manage players, tournaments, and club activities all in one place. Stay on top of game stats, schedules, and performance insights with ease.
           </p>
           
-          <Link href="/analytics" className="analytics-button">
-            <button className="blob-btn">
-              <span className="blob-btn__inner">
-                <span className="blob-btn__blobs">
-                  <span className="blob-btn__blob"></span>
-                  <span className="blob-btn__blob"></span>
-                  <span className="blob-btn__blob"></span>
-                  <span className="blob-btn__blob"></span>
+          <div className="button-group">
+            <Link href="/analytics" className="analytics-button">
+              <button className="blob-btn">
+                <span className="blob-btn__inner">
+                  <span className="blob-btn__blobs">
+                    <span className="blob-btn__blob"></span>
+                    <span className="blob-btn__blob"></span>
+                    <span className="blob-btn__blob"></span>
+                    <span className="blob-btn__blob"></span>
+                  </span>
                 </span>
-              </span>
-              Go to Analytics
-              <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="0" height="0">
-                <defs>
-                  <filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/><feBlend in="SourceGraphic" in2="goo"/></filter>
-                </defs>
-              </svg>
-            </button>
-          </Link>
+                Go to Analytics
+                <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="0" height="0">
+                  <defs>
+                    <filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/><feBlend in="SourceGraphic" in2="goo"/></filter>
+                  </defs>
+                </svg>
+              </button>
+            </Link>
+            
+            <Link href="/events" className="events-button">
+              <button className="blob-btn">
+                <span className="blob-btn__inner">
+                  <span className="blob-btn__blobs">
+                    <span className="blob-btn__blob"></span>
+                    <span className="blob-btn__blob"></span>
+                    <span className="blob-btn__blob"></span>
+                    <span className="blob-btn__blob"></span>
+                  </span>
+                </span>
+                Manage Events
+                <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="0" height="0">
+                  <defs>
+                    <filter id="goo2"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/><feBlend in="SourceGraphic" in2="goo"/></filter>
+                  </defs>
+                </svg>
+              </button>
+            </Link>
+          </div>
           
         </div>
         
@@ -261,7 +283,7 @@ export default function HomePage() {
           <div className="footer-column">
             <h3 className="footer-section-title">Support & Legal</h3>
             <ul className="footer-link-list">
-              <li><a href="#" className="footer-link">Help Center</a></li>
+              <li><a href="/support" className="footer-link">Help Center</a></li>
               <li><a href="#" className="footer-link">Documentation</a></li>
               <li><a href="#" className="footer-link">Contact Support</a></li>
               <li><a href="#" className="footer-link">Terms of Service</a></li>
@@ -790,9 +812,15 @@ export default function HomePage() {
         .main-description {
           font-size: 1.25rem;
           color: #374151;
-          margin-bottom: 8rem;
+          margin-bottom: 4rem;
           line-height: 1.6;
           max-width: 28rem;
+        }
+        
+        .button-group {
+          display: flex;
+          gap: 2rem;
+          margin-bottom: 4rem;
         }
 
         .blob-btn {

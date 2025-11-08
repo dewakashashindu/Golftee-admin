@@ -185,6 +185,7 @@ export default function NotificationsPage() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link active" style={{ position: 'relative' }}>
             Notifications
             {unreadCount > 0 && (
@@ -946,73 +947,392 @@ export default function NotificationsPage() {
           margin: 0;
         }
 
+        /* Responsive Breakpoints */
+        @media (max-width: 1400px) {
+          .navigation {
+            padding: 2.2rem 3rem 1.3rem 3rem;
+          }
+          .nav-links {
+            gap: 2.5rem;
+          }
+          .nav-link {
+            font-size: 1.3rem;
+            padding: 0.45rem 0.9rem;
+          }
+          .main-content {
+            padding: 1rem 3rem 2rem 3rem;
+          }
+          .page-title {
+            font-size: 2.3rem;
+          }
+          .notification-item {
+            padding: 1.4rem;
+          }
+          .notification-title {
+            font-size: 1.05rem;
+          }
+        }
+
         @media (max-width: 1200px) {
+          .navigation {
+            padding: 2rem 2.5rem 1.2rem 2.5rem;
+          }
+          .nav-links {
+            gap: 2rem;
+          }
+          .nav-link {
+            font-size: 1.25rem;
+            padding: 0.4rem 0.85rem;
+          }
           .main-content {
             padding: 1rem 2rem 2rem 2rem;
+          }
+          .page-title {
+            font-size: 2.2rem;
+          }
+          .notification-item {
+            padding: 1.3rem;
+          }
+          .filter-buttons {
+            padding: 0.9rem;
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .navigation {
+            padding: 1.8rem 2rem 1.1rem 2rem;
+          }
+          .nav-links {
+            gap: 1.8rem;
+          }
+          .nav-link {
+            font-size: 1.2rem;
+            padding: 0.4rem 0.8rem;
+          }
+          .main-content {
+            padding: 1rem 1.5rem 2rem 1.5rem;
+          }
+          .page-title {
+            font-size: 2.1rem;
+          }
+          .notification-icon {
+            width: 44px;
+            height: 44px;
+          }
+          .notification-type-icon {
+            width: 22px;
+            height: 22px;
+          }
+          .filter-btn {
+            padding: 0.45rem 0.9rem;
+            font-size: 0.85rem;
+          }
+        }
+
+        @media (max-width: 968px) {
+          .navigation {
+            padding: 1.6rem 1.5rem 1rem 1.5rem;
+          }
+          .nav-links {
+            gap: 1.5rem;
+          }
+          .nav-link {
+            font-size: 1.15rem;
+            padding: 0.4rem 0.75rem;
+          }
+          .main-content {
+            padding: 1rem 1.2rem 2rem 1.2rem;
+          }
+          .page-title {
+            font-size: 2rem;
+          }
+          .page-header {
+            gap: 1.5rem;
+          }
+          .notification-item {
+            padding: 1.2rem;
+          }
+          .notification-title {
+            font-size: 1rem;
           }
         }
 
         @media (max-width: 800px) {
           .navigation {
-            flex-direction: column;
             gap: 1.2rem;
-            padding: 1.2rem 0.5rem 1rem 0.5rem;
+            padding: 1.2rem 0.8rem 1rem 0.8rem;
           }
-
           .nav-links {
-            flex-wrap: wrap;
-            justify-content: center;
             gap: 1rem;
           }
-
           .nav-link {
             font-size: 1rem;
             padding: 0.4rem 0.8rem;
           }
-
           .main-content {
-            padding: 1rem 0.5rem 2rem 0.5rem;
+            padding: 1rem 0.8rem 2rem 0.8rem;
           }
-
+          .page-title {
+            font-size: 1.9rem;
+          }
           .page-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 1rem;
+            gap: 1.2rem;
           }
-
-          .page-title {
-            font-size: 2rem;
+          .page-title-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
           }
-
           .filter-buttons {
-            padding: 0.75rem;
+            padding: 0.8rem;
+            gap: 0.4rem;
           }
-
+          .filter-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+          }
           .notification-item {
             padding: 1rem;
-            flex-direction: column;
-            align-items: flex-start;
+            gap: 0.8rem;
           }
-
+          .notification-icon {
+            width: 40px;
+            height: 40px;
+          }
+          .notification-type-icon {
+            width: 20px;
+            height: 20px;
+          }
           .notification-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
+            gap: 0.8rem;
           }
-
+          .notification-title {
+            font-size: 0.95rem;
+          }
+          .notification-message {
+            font-size: 0.9rem;
+          }
           .notification-actions {
-            flex-direction: row;
-            align-self: flex-end;
             position: absolute;
             top: 1rem;
             right: 1rem;
+            flex-direction: row;
           }
+        }
 
+        @media (max-width: 768px) {
+          .navigation {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem 0.6rem 0.8rem 0.6rem;
+          }
+          .nav-links {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+          }
+          .nav-link {
+            font-size: 0.95rem;
+            padding: 0.35rem 0.7rem;
+          }
+          .main-content {
+            padding: 1rem 0.6rem 2rem 0.6rem;
+          }
+          .page-title {
+            font-size: 1.8rem;
+          }
+          .filter-buttons {
+            padding: 0.7rem;
+            justify-content: center;
+          }
+          .notification-item {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.9rem;
+          }
+          .notification-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.3rem;
+            width: 100%;
+          }
+          .notification-actions {
+            top: 0.8rem;
+            right: 0.8rem;
+          }
           .profile-card {
             width: 260px;
             right: auto;
             left: 50%;
             transform: translateX(-50%);
+          }
+        }
+
+        @media (max-width: 640px) {
+          .navigation {
+            padding: 0.8rem 0.4rem 0.6rem 0.4rem;
+          }
+          .nav-links {
+            gap: 0.6rem;
+          }
+          .nav-link {
+            font-size: 0.9rem;
+            padding: 0.3rem 0.6rem;
+          }
+          .main-content {
+            padding: 1rem 0.4rem 2rem 0.4rem;
+          }
+          .page-title {
+            font-size: 1.6rem;
+          }
+          .mark-all-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+          }
+          .filter-buttons {
+            padding: 0.6rem;
+            gap: 0.3rem;
+          }
+          .filter-btn {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.75rem;
+          }
+          .notification-item {
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+          }
+          .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+          }
+          .notification-type-icon {
+            width: 18px;
+            height: 18px;
+          }
+          .notification-title {
+            font-size: 0.9rem;
+          }
+          .notification-message {
+            font-size: 0.85rem;
+            line-height: 1.4;
+          }
+          .notification-time {
+            font-size: 0.8rem;
+          }
+          .action-btn {
+            width: 28px;
+            height: 28px;
+          }
+          .action-btn svg {
+            width: 14px;
+            height: 14px;
+          }
+          .notification-actions {
+            top: 0.7rem;
+            right: 0.7rem;
+            gap: 0.4rem;
+          }
+          .unread-indicator {
+            top: 0.7rem;
+            right: 0.7rem;
+            width: 6px;
+            height: 6px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .navigation {
+            padding: 0.6rem 0.2rem 0.4rem 0.2rem;
+          }
+          .nav-link {
+            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+          }
+          .main-content {
+            padding: 0.8rem 0.2rem 1.5rem 0.2rem;
+          }
+          .page-title {
+            font-size: 1.4rem;
+          }
+          .page-title-section {
+            text-align: center;
+            width: 100%;
+          }
+          .unread-count {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+          }
+          .mark-all-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            width: 100%;
+            justify-content: center;
+          }
+          .filter-buttons {
+            padding: 0.5rem;
+            gap: 0.2rem;
+          }
+          .filter-btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+          }
+          .notification-item {
+            padding: 0.7rem;
+          }
+          .notification-icon {
+            width: 32px;
+            height: 32px;
+          }
+          .notification-type-icon {
+            width: 16px;
+            height: 16px;
+          }
+          .notification-title {
+            font-size: 0.85rem;
+            line-height: 1.3;
+          }
+          .notification-message {
+            font-size: 0.8rem;
+          }
+          .notification-time {
+            font-size: 0.75rem;
+          }
+          .notification-action {
+            font-size: 0.8rem;
+          }
+          .action-btn {
+            width: 26px;
+            height: 26px;
+          }
+          .action-btn svg {
+            width: 12px;
+            height: 12px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .page-title {
+            font-size: 1.3rem;
+          }
+          .notification-item {
+            padding: 0.6rem;
+          }
+          .notification-icon {
+            width: 30px;
+            height: 30px;
+          }
+          .notification-title {
+            font-size: 0.8rem;
+          }
+          .notification-message {
+            font-size: 0.75rem;
+          }
+          .filter-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.65rem;
           }
         }
       `}</style>

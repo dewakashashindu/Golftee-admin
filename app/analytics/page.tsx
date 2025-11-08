@@ -189,6 +189,7 @@ export default function AnalyticsPage() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications
             {/* Unread badge */}
@@ -1045,34 +1046,142 @@ export default function AnalyticsPage() {
           height: 350px;
           position: relative;
         }
+        @media (max-width: 1400px) {
+          .stat-cards {
+            gap: 2rem;
+          }
+          .stat-card {
+            width: 220px;
+            height: 110px;
+          }
+          .chart-container {
+            width: 95vw;
+            padding: 2rem 1.8rem 1.3rem 1.8rem;
+          }
+        }
+
         @media (max-width: 1200px) {
           .stat-cards {
             flex-wrap: wrap;
-            gap: 1.2rem;
+            gap: 1.5rem;
+            justify-content: center;
           }
           .stat-card {
-            width: 180px;
-            height: 100px;
+            width: 200px;
+            height: 105px;
+          }
+          .stat-value {
+            font-size: 2.4rem;
+          }
+          .stat-label {
+            font-size: 1rem;
           }
           .chart-container {
-            width: 99vw;
-            padding: 1.2rem 0.2rem 1rem 0.2rem;
+            width: 98vw;
+            padding: 1.8rem 1.2rem 1.2rem 1.2rem;
           }
           .chart-header {
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.2rem;
             align-items: flex-start;
           }
           .chart-title-section {
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.2rem;
             align-items: flex-start;
+            width: 100%;
           }
           .revenue-calculator {
             min-width: auto;
             width: 100%;
+            max-width: 220px;
             text-align: center;
             align-items: center;
+          }
+          .chart-controls {
+            flex-wrap: wrap;
+            gap: 0.4rem;
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .navigation {
+            padding: 2rem 2.5rem 1.2rem 2.5rem;
+          }
+          .nav-links {
+            gap: 2.5rem;
+          }
+          .nav-link {
+            font-size: 1.25rem;
+          }
+          .stat-cards {
+            gap: 1.3rem;
+          }
+          .stat-card {
+            width: 180px;
+            height: 95px;
+          }
+          .stat-value {
+            font-size: 2.2rem;
+          }
+          .stat-label {
+            font-size: 0.95rem;
+          }
+          .chart-title {
+            font-size: 1.2rem;
+          }
+          .chart-area {
+            height: 320px;
+          }
+          
+          /* Review Analysis Responsiveness */
+          .review-analysis-container {
+            width: 98vw;
+            padding: 1.8rem;
+          }
+          .review-stats {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+          .reviews-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          }
+        }
+
+        @media (max-width: 968px) {
+          .navigation {
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1.5rem 1rem;
+          }
+          .nav-links {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+          }
+          .nav-link {
+            font-size: 1.1rem;
+            padding: 0.45rem 0.9rem;
+          }
+          .notification-card {
+            width: 300px;
+            left: 0;
+            transform: none;
+          }
+          .profile-card {
+            width: 270px;
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+          }
+          .stat-cards {
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
+          }
+          .stat-card {
+            width: 220px;
+            height: 100px;
           }
         }
         /* Review Analysis Styles */
@@ -1329,13 +1438,10 @@ export default function AnalyticsPage() {
 
         @media (max-width: 800px) {
           .navigation {
-            flex-direction: column;
             gap: 1.2rem;
             padding: 1.2rem 0.5rem 1rem 0.5rem;
           }
           .nav-links {
-            flex-wrap: wrap;
-            justify-content: center;
             gap: 1rem;
           }
           .nav-link {
@@ -1353,33 +1459,53 @@ export default function AnalyticsPage() {
             left: 50%;
             transform: translateX(-50%);
           }
-          .stat-cards {
-            flex-direction: column;
-            align-items: center;
-            gap: 1.2rem;
-          }
           .chart-container {
             width: 99vw;
-            padding: 0.5rem 0.1rem 0.5rem 0.1rem;
+            padding: 1rem 0.5rem;
+          }
+          .chart-header {
+            gap: 0.8rem;
+          }
+          .chart-title {
+            font-size: 1.1rem;
+          }
+          .revenue-calculator {
+            max-width: 200px;
+            padding: 0.8rem 1.2rem;
+          }
+          .calculator-value {
+            font-size: 1.6rem;
           }
           .chart-controls {
             flex-wrap: wrap;
+            gap: 0.3rem;
           }
           .time-btn {
             padding: 0.4rem 0.8rem;
             font-size: 0.8rem;
           }
+          .chart-area {
+            height: 280px;
+          }
           
           /* Review Analysis Mobile Styles */
           .review-analysis-container {
             width: 99vw;
-            padding: 1rem;
+            padding: 1.2rem 0.8rem;
           }
           
           .review-header {
             flex-direction: column;
             gap: 1rem;
             text-align: center;
+          }
+          
+          .review-title {
+            font-size: 1.3rem;
+          }
+          
+          .rating-score {
+            font-size: 2.2rem;
           }
           
           .review-stats {
@@ -1397,6 +1523,160 @@ export default function AnalyticsPage() {
           
           .highlight-tags {
             justify-content: center;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .stat-card {
+            width: 200px;
+            height: 90px;
+          }
+          .stat-value {
+            font-size: 2rem;
+          }
+          .stat-label {
+            font-size: 0.9rem;
+          }
+          .chart-container {
+            padding: 0.8rem 0.3rem;
+          }
+          .chart-title {
+            font-size: 1rem;
+          }
+          .revenue-calculator {
+            max-width: 180px;
+            padding: 0.7rem 1rem;
+          }
+          .calculator-value {
+            font-size: 1.4rem;
+          }
+          .calculator-label, .calculator-period {
+            font-size: 0.8rem;
+          }
+          .time-btn {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.75rem;
+          }
+          .chart-area {
+            height: 250px;
+          }
+          
+          .review-analysis-container {
+            padding: 1rem 0.5rem;
+          }
+          
+          .review-title {
+            font-size: 1.2rem;
+          }
+          
+          .rating-score {
+            font-size: 2rem;
+          }
+          
+          .rating-count {
+            font-size: 0.8rem;
+          }
+          
+          .rating-bars {
+            gap: 0.4rem;
+          }
+          
+          .rating-bar {
+            font-size: 0.8rem;
+          }
+          
+          .highlight-tag {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+          }
+          
+          .review-card {
+            padding: 0.8rem;
+          }
+          
+          .reviewer-name {
+            font-size: 0.85rem;
+          }
+          
+          .review-content {
+            font-size: 0.85rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .navigation {
+            padding: 1rem 0.3rem 0.8rem 0.3rem;
+          }
+          .nav-links {
+            gap: 0.8rem;
+          }
+          .nav-link {
+            font-size: 0.9rem;
+            padding: 0.35rem 0.7rem;
+          }
+          .stat-card {
+            width: 180px;
+            height: 85px;
+          }
+          .stat-value {
+            font-size: 1.8rem;
+          }
+          .stat-label {
+            font-size: 0.85rem;
+          }
+          .chart-container {
+            padding: 0.6rem 0.2rem;
+          }
+          .chart-area {
+            height: 220px;
+          }
+          .time-btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+          }
+          
+          .review-analysis-container {
+            padding: 0.8rem 0.3rem;
+          }
+          
+          .review-title {
+            font-size: 1.1rem;
+          }
+          
+          .rating-score {
+            font-size: 1.8rem;
+          }
+          
+          .review-card {
+            padding: 0.7rem;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .stat-card {
+            width: 160px;
+            height: 80px;
+          }
+          .stat-value {
+            font-size: 1.6rem;
+          }
+          .stat-label {
+            font-size: 0.8rem;
+          }
+          .chart-area {
+            height: 200px;
+          }
+          
+          .review-analysis-container {
+            padding: 0.6rem 0.2rem;
+          }
+          
+          .review-title {
+            font-size: 1rem;
+          }
+          
+          .rating-score {
+            font-size: 1.6rem;
           }
         }
       `}</style>

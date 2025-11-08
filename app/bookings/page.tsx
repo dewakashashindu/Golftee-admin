@@ -139,6 +139,7 @@ export default function BookingsPage() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications
             {/* Unread badge */}
@@ -319,6 +320,7 @@ export default function BookingsPage() {
         </div>
         
         <div className="table-container">
+          {/* Desktop Table View */}
           <table className="bookings-table">
             <thead>
               <tr className="table-header">
@@ -353,6 +355,46 @@ export default function BookingsPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Mobile Card View */}
+          <div className="mobile-booking-cards">
+            {filteredBookings.map((booking) => (
+              <div key={booking.id} className="booking-card">
+                <div className="booking-card-header">
+                  <div className="booking-card-name">{booking.fullName}</div>
+                  <span className={`status-badge ${booking.status.toLowerCase()}`}>
+                    {booking.status}
+                  </span>
+                </div>
+                <div className="booking-card-details">
+                  <div className="booking-detail">
+                    <span className="booking-detail-label">Date</span>
+                    <span className="booking-detail-value">{booking.date}</span>
+                  </div>
+                  <div className="booking-detail">
+                    <span className="booking-detail-label">Time</span>
+                    <span className="booking-detail-value">{booking.startTime} - {booking.endTime}</span>
+                  </div>
+                  <div className="booking-detail">
+                    <span className="booking-detail-label">Players</span>
+                    <span className="booking-detail-value">{booking.noPlayers}</span>
+                  </div>
+                  <div className="booking-detail">
+                    <span className="booking-detail-label">Non-Players</span>
+                    <span className="booking-detail-value">{booking.nonPlayers}</span>
+                  </div>
+                  <div className="booking-detail">
+                    <span className="booking-detail-label">Email</span>
+                    <span className="booking-detail-value">{booking.email}</span>
+                  </div>
+                  <div className="booking-detail">
+                    <span className="booking-detail-label">Phone</span>
+                    <span className="booking-detail-value">{booking.phoneNo}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -424,7 +466,7 @@ export default function BookingsPage() {
           <div className="footer-column">
             <h3 className="footer-section-title">Support & Legal</h3>
             <ul className="footer-link-list">
-              <li><a href="#" className="footer-link">Help Center</a></li>
+              <li><a href="/support" className="footer-link">Help Center</a></li>
               <li><a href="#" className="footer-link">Documentation</a></li>
               <li><a href="#" className="footer-link">Contact Support</a></li>
               <li><a href="#" className="footer-link">Terms of Service</a></li>
@@ -960,6 +1002,12 @@ export default function BookingsPage() {
           background: #fee2e2;
           color: #dc2626;
         }
+        @media (max-width: 1400px) {
+          .main-content {
+            padding: 1rem 2.5rem 2rem 2.5rem;
+          }
+        }
+
         @media (max-width: 1200px) {
           .main-content {
             padding: 1rem 2rem 2rem 2rem;
@@ -967,16 +1015,83 @@ export default function BookingsPage() {
           .table-container {
             overflow-x: auto;
           }
+          .page-title {
+            font-size: 2.2rem;
+          }
         }
-        @media (max-width: 800px) {
+
+        @media (max-width: 1024px) {
+          .navigation {
+            padding: 2rem 2.5rem 1.2rem 2.5rem;
+          }
+          .nav-links {
+            gap: 2.5rem;
+          }
+          .nav-link {
+            font-size: 1.25rem;
+          }
+          .main-content {
+            padding: 1rem 1.5rem 2rem 1.5rem;
+          }
+          .page-title {
+            font-size: 2rem;
+          }
+          .table-row td {
+            padding: 1rem 1.2rem;
+            font-size: 0.85rem;
+          }
+          .table-header th {
+            padding: 0.9rem 1.2rem;
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-width: 968px) {
           .navigation {
             flex-direction: column;
-            gap: 1.2rem;
-            padding: 1.2rem 0.5rem 1rem 0.5rem;
+            gap: 1.5rem;
+            padding: 1.5rem 1rem;
           }
           .nav-links {
             flex-wrap: wrap;
             justify-content: center;
+            gap: 1.5rem;
+          }
+          .nav-link {
+            font-size: 1.1rem;
+            padding: 0.45rem 0.9rem;
+          }
+          .notification-card {
+            width: 300px;
+            left: 0;
+            transform: none;
+          }
+          .profile-card {
+            width: 270px;
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+          }
+          .header-top {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.2rem;
+          }
+          .filter-select {
+            width: 100%;
+            min-width: auto;
+          }
+          .table-container {
+            border-radius: 8px;
+          }
+        }
+
+        @media (max-width: 800px) {
+          .navigation {
+            gap: 1.2rem;
+            padding: 1.2rem 0.5rem 1rem 0.5rem;
+          }
+          .nav-links {
             gap: 1rem;
           }
           .nav-link {
@@ -985,34 +1100,213 @@ export default function BookingsPage() {
           }
           .notification-card {
             width: 280px;
-            left: 0;
-            transform: none;
           }
           .profile-card {
             width: 260px;
-            right: auto;
-            left: 50%;
-            transform: translateX(-50%);
           }
           .main-content {
             padding: 1rem 0.5rem 2rem 0.5rem;
           }
           .page-title {
-            font-size: 2rem;
-          }
-          .header-top {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-          }
-          .filter-select {
-            width: 100%;
-            min-width: auto;
+            font-size: 1.8rem;
           }
           .custom-date-section {
             flex-direction: column;
             align-items: stretch;
             gap: 0.5rem;
+          }
+
+          /* Enhanced Table Responsiveness */
+          .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+          }
+          
+          .bookings-table {
+            min-width: 800px;
+          }
+          
+          .table-row td {
+            padding: 0.8rem 0.8rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+          }
+          
+          .table-header th {
+            padding: 0.8rem 0.8rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+          }
+
+          .status-badge {
+            padding: 0.25rem 0.6rem;
+            font-size: 0.75rem;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .page-title {
+            font-size: 1.6rem;
+          }
+
+          .results-count {
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
+          }
+
+          /* Mobile Table Optimization */
+          .table-container {
+            background: transparent;
+            box-shadow: none;
+          }
+
+          .bookings-table {
+            display: none;
+          }
+
+          /* Card-based layout for mobile */
+          .mobile-booking-cards {
+            display: block;
+            gap: 1rem;
+          }
+
+          /* Default mobile cards hidden */
+        }
+
+        /* Mobile booking cards styles (default hidden) */
+        .mobile-booking-cards {
+          display: none;
+        }
+
+        @media (max-width: 640px) {
+          .mobile-booking-cards {
+            display: block;
+          }
+
+          .booking-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #16a34a;
+          }
+
+          .booking-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #f3f4f6;
+          }
+
+          .booking-card-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #111;
+          }
+
+          .booking-card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+          }
+
+          .booking-detail {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .booking-detail-label {
+            font-weight: 500;
+            color: #6b7280;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.2rem;
+          }
+
+          .booking-detail-value {
+            color: #374151;
+            font-weight: 500;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .navigation {
+            padding: 1rem 0.3rem 0.8rem 0.3rem;
+          }
+          .nav-links {
+            gap: 0.8rem;
+          }
+          .nav-link {
+            font-size: 0.9rem;
+            padding: 0.35rem 0.7rem;
+          }
+          .main-content {
+            padding: 0.8rem 0.3rem 1.5rem 0.3rem;
+          }
+          .page-title {
+            font-size: 1.4rem;
+          }
+          .filter-select {
+            padding: 0.6rem 2rem 0.6rem 0.8rem;
+            font-size: 0.9rem;
+          }
+          .date-input {
+            padding: 0.5rem 0.8rem;
+            font-size: 0.8rem;
+          }
+          .clear-date-btn {
+            padding: 0.5rem 0.8rem;
+            font-size: 0.8rem;
+          }
+          
+          .booking-card {
+            padding: 0.8rem;
+          }
+          
+          .booking-card-name {
+            font-size: 0.9rem;
+          }
+          
+          .booking-card-details {
+            grid-template-columns: 1fr;
+            gap: 0.4rem;
+          }
+          
+          .booking-detail {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+          
+          .booking-detail-label {
+            margin-bottom: 0;
+            font-size: 0.7rem;
+          }
+          
+          .booking-detail-value {
+            font-size: 0.8rem;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .page-title {
+            font-size: 1.25rem;
+          }
+          .nav-link {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.6rem;
+          }
+          .booking-card {
+            padding: 0.7rem;
+          }
+          .booking-card-name {
+            font-size: 0.85rem;
           }
         }
 

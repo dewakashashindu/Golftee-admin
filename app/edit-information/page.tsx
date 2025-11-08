@@ -94,6 +94,7 @@ export default function EditInformation() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications
             {/* Unread badge */}
@@ -389,7 +390,7 @@ export default function EditInformation() {
           <div className="footer-column">
             <h3 className="footer-section-title">Support & Legal</h3>
             <ul className="footer-link-list">
-              <li><a href="#" className="footer-link">Help Center</a></li>
+              <li><a href="/support" className="footer-link">Help Center</a></li>
               <li><a href="#" className="footer-link">Documentation</a></li>
               <li><a href="#" className="footer-link">Contact Support</a></li>
               <li><a href="#" className="footer-link">Terms of Service</a></li>
@@ -994,68 +995,307 @@ export default function EditInformation() {
           box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
         }
 
+        /* Responsive Breakpoints */
+        @media (max-width: 1400px) {
+          .navigation {
+            padding: 2.2rem 3rem 1.3rem 3rem;
+          }
+          .nav-links {
+            gap: 2.5rem;
+          }
+          .nav-link {
+            font-size: 1.3rem;
+            padding: 0.45rem 0.9rem;
+          }
+          .main-content {
+            padding: 1rem 3rem 2rem 3rem;
+          }
+          .page-title {
+            font-size: 2.3rem;
+          }
+          .form-container {
+            max-width: 750px;
+          }
+        }
+
         @media (max-width: 1200px) {
+          .navigation {
+            padding: 2rem 2.5rem 1.2rem 2.5rem;
+          }
+          .nav-links {
+            gap: 2rem;
+          }
+          .nav-link {
+            font-size: 1.25rem;
+            padding: 0.4rem 0.85rem;
+          }
           .main-content {
             padding: 1rem 2rem 2rem 2rem;
+          }
+          .page-title {
+            font-size: 2.2rem;
+          }
+          .form-container {
+            max-width: 700px;
+          }
+          .profile-form {
+            padding: 2.2rem;
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .navigation {
+            padding: 1.8rem 2rem 1.1rem 2rem;
+          }
+          .nav-links {
+            gap: 1.8rem;
+          }
+          .nav-link {
+            font-size: 1.2rem;
+            padding: 0.4rem 0.8rem;
+          }
+          .main-content {
+            padding: 1rem 1.5rem 2rem 1.5rem;
+          }
+          .page-title {
+            font-size: 2.1rem;
+          }
+          .form-container {
+            max-width: 650px;
+          }
+          .profile-picture-container {
+            width: 130px;
+            height: 130px;
+          }
+        }
+
+        @media (max-width: 968px) {
+          .navigation {
+            padding: 1.6rem 1.5rem 1rem 1.5rem;
+          }
+          .nav-links {
+            gap: 1.5rem;
+          }
+          .nav-link {
+            font-size: 1.15rem;
+            padding: 0.4rem 0.75rem;
+          }
+          .main-content {
+            padding: 1rem 1.2rem 2rem 1.2rem;
+          }
+          .page-title {
+            font-size: 2rem;
+          }
+          .form-container {
+            max-width: 600px;
+          }
+          .profile-form {
+            padding: 2rem;
+          }
+          .profile-picture-container {
+            width: 125px;
+            height: 125px;
           }
         }
 
         @media (max-width: 800px) {
           .navigation {
-            flex-direction: column;
             gap: 1.2rem;
-            padding: 1.2rem 0.5rem 1rem 0.5rem;
+            padding: 1.2rem 0.8rem 1rem 0.8rem;
           }
-
           .nav-links {
-            flex-wrap: wrap;
-            justify-content: center;
             gap: 1rem;
           }
-
           .nav-link {
             font-size: 1rem;
             padding: 0.4rem 0.8rem;
           }
-
           .notification-card {
             width: 280px;
             left: 0;
             transform: none;
           }
-
           .profile-card {
             width: 260px;
             right: auto;
             left: 50%;
             transform: translateX(-50%);
           }
-
           .main-content {
-            padding: 1rem 0.5rem 2rem 0.5rem;
+            padding: 1rem 0.8rem 2rem 0.8rem;
           }
-
           .page-title {
-            font-size: 2rem;
+            font-size: 1.9rem;
           }
+          .form-container {
+            max-width: 95%;
+          }
+          .profile-form {
+            padding: 1.8rem;
+          }
+          .profile-picture-container {
+            width: 120px;
+            height: 120px;
+          }
+          .form-actions {
+            gap: 1.2rem;
+          }
+          .profile-picture-actions {
+            gap: 0.8rem;
+          }
+        }
 
+        @media (max-width: 768px) {
+          .navigation {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem 0.6rem 0.8rem 0.6rem;
+          }
+          .nav-links {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+          }
+          .nav-link {
+            font-size: 0.95rem;
+            padding: 0.35rem 0.7rem;
+          }
+          .main-content {
+            padding: 1rem 0.6rem 2rem 0.6rem;
+          }
+          .page-title {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 2rem;
+          }
+          .form-container {
+            margin: 0;
+            border-radius: 8px;
+          }
           .profile-form {
             padding: 1.5rem;
           }
+          .profile-picture-container {
+            width: 110px;
+            height: 110px;
+          }
+          .form-group label {
+            font-size: 0.95rem;
+          }
+          .form-group input,
+          .form-group select {
+            padding: 0.9rem 1.1rem;
+            font-size: 0.95rem;
+          }
+        }
 
+        @media (max-width: 640px) {
+          .navigation {
+            padding: 0.8rem 0.4rem 0.6rem 0.4rem;
+          }
+          .nav-links {
+            gap: 0.6rem;
+          }
+          .nav-link {
+            font-size: 0.9rem;
+            padding: 0.3rem 0.6rem;
+          }
+          .main-content {
+            padding: 1rem 0.4rem 2rem 0.4rem;
+          }
+          .page-title {
+            font-size: 1.6rem;
+          }
+          .profile-form {
+            padding: 1.2rem;
+          }
+          .profile-picture-container {
+            width: 100px;
+            height: 100px;
+          }
+          .profile-picture-actions {
+            flex-direction: column;
+            gap: 0.6rem;
+          }
+          .upload-btn, .remove-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+          }
+          .form-group {
+            margin-bottom: 1.5rem;
+          }
+          .form-group input,
+          .form-group select {
+            padding: 0.8rem 1rem;
+          }
           .form-actions {
             flex-direction: column;
             gap: 1rem;
           }
-
-          .profile-picture-actions {
-            flex-direction: column;
-            gap: 0.75rem;
+          .save-btn, .delete-account-btn {
+            padding: 0.9rem 2rem;
+            font-size: 1rem;
           }
+        }
 
+        @media (max-width: 480px) {
+          .navigation {
+            padding: 0.6rem 0.2rem 0.4rem 0.2rem;
+          }
+          .nav-link {
+            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+          }
+          .main-content {
+            padding: 0.8rem 0.2rem 1.5rem 0.2rem;
+          }
+          .page-title {
+            font-size: 1.4rem;
+          }
+          .profile-form {
+            padding: 1rem;
+          }
           .profile-picture-container {
-            width: 120px;
-            height: 120px;
+            width: 90px;
+            height: 90px;
+          }
+          .form-group label {
+            font-size: 0.9rem;
+          }
+          .form-group input,
+          .form-group select {
+            padding: 0.7rem 0.9rem;
+            font-size: 0.9rem;
+          }
+          .upload-btn, .remove-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+          }
+          .save-btn, .delete-account-btn {
+            padding: 0.8rem 1.8rem;
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .page-title {
+            font-size: 1.3rem;
+          }
+          .profile-form {
+            padding: 0.8rem;
+          }
+          .profile-picture-container {
+            width: 80px;
+            height: 80px;
+          }
+          .form-group input,
+          .form-group select {
+            padding: 0.6rem 0.8rem;
+            font-size: 0.85rem;
+          }
+          .save-btn, .delete-account-btn {
+            padding: 0.7rem 1.5rem;
+            font-size: 0.9rem;
           }
         }
 
