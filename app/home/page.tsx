@@ -27,9 +27,9 @@ export default function HomePage() {
             {/* Top Navigation */}
       <nav className="navigation">
         <div className="nav-links">
-          <a href="/home" className="nav-link">Home</a>
-          <a href="/bookings" className="nav-link">Bookings</a>
-          <a href="/support" className="nav-link">Support</a>
+          <a href="/home" className="nav-link">HOME</a>
+          <a href="/bookings" className="nav-link">BOOKING</a>
+          <a href="/support" className="nav-link">SUPPORT</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications
             {/* Unread badge */}
