@@ -82,14 +82,28 @@ export default function Navigation({ currentPage }: NavigationProps) {
             <div className="dropdown-arrow">▼</div>
             {showSettingsDropdown && (
               <div className="dropdown-menu">
-                <a href="/edit-information" className="dropdown-item">
+                <div
+                  className="dropdown-item"
+                  onClick={() => {
+                    window.location.href = '/edit-information';
+                  }}
+                >
                   <span className="dropdown-icon">👤</span>
                   Edit Information
-                </a>
+                </div>
                 <a href="/privacy-policy" className="dropdown-item">
                   <span className="dropdown-icon">🔒</span>
                   Privacy Policy
                 </a>
+                <div
+                  className="dropdown-item"
+                  onClick={() => {
+                    window.location.href = '/reset-password';
+                  }}
+                >
+                  <span className="dropdown-icon">🔑</span>
+                  Reset Password
+                </div>
                 <div className="dropdown-item" onClick={() => {
                   localStorage.removeItem('adminToken');
                   window.location.href = '/login';
