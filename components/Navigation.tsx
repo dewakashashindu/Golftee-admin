@@ -132,7 +132,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
         }
 
         .nav-link:hover, .nav-link.active {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #37e663ff 0%, #085014ff 100%);
           color: white;
           transform: translateY(-1px);
         }
