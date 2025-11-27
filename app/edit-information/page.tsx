@@ -94,6 +94,7 @@ export default function EditInformation() {
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/equipment" className="nav-link">Equipment</a>
           <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications

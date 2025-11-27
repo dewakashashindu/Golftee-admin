@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Navigation from "../../components/Navigation";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -184,11 +185,11 @@ export default function AnalyticsPage() {
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />
       
-      {/* Top Navigation */}
-      <nav className="navigation">
+      <Navigation currentPage="analytics" />
         <div className="nav-links">
           <a href="/home" className="nav-link">Home</a>
           <a href="/bookings" className="nav-link">Bookings</a>
+          <a href="/equipment" className="nav-link">Equipment</a>
           <a href="/support" className="nav-link">Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
             Notifications
@@ -307,8 +308,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
           )}
-        </div>
-      </nav>
+      
       {/* Stat Cards */}
       <div className="stat-cards">
         <div className="stat-card stat-orange">

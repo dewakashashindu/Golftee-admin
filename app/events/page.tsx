@@ -2,6 +2,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import Navigation from "../../components/Navigation";
 
 interface Tournament {
   id: string;
@@ -164,52 +165,9 @@ export default function EventsPage() {
         zIndex: 0
       }} />
       
-      {/* Navigation */}
-      <nav style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '2.5rem 3.5rem 1.5rem 3.5rem',
-        position: 'relative',
-        zIndex: 1001
-      }}>
-        <div style={{
-          display: 'flex',
-          gap: '3rem'
-        }}>
-          <a href="/home" style={{
-            fontSize: '1.35rem',
-            fontWeight: '500',
-            color: '#111',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            transition: 'all 0.2s',
-            position: 'relative'
-          }}>Home</a>
-          <a href="/bookings" style={{
-            fontSize: '1.35rem',
-            fontWeight: '500',
-            color: '#111',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            transition: 'all 0.2s',
-            position: 'relative'
-          }}>Bookings</a>
-          <a href="/support" style={{
-            fontSize: '1.35rem',
-            fontWeight: '500',
-            color: '#111',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            transition: 'all 0.2s',
-            position: 'relative'
-          }}>Support</a>
+      <Navigation currentPage="events" />
+
+
           <a href="/notifications" style={{ 
             fontSize: '1.35rem',
             fontWeight: '500',

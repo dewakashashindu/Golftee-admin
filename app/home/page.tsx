@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import Navigation from "../../components/Navigation";
 const sampleNotifications = [
   { id: '1', isRead: false },
   { id: '2', isRead: false },
@@ -24,100 +25,9 @@ export default function HomePage() {
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />
       
-            {/* Top Navigation */}
-      <nav className="navigation">
-        <div className="nav-links">
-          <a href="/home" className="nav-link">HOME</a>
-          <a href="/bookings" className="nav-link">BOOKING</a>
-          <a href="/support" className="nav-link">SUPPORT</a>
-          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
-            Notifications
-            {/* Unread badge */}
-            <span style={{
-              position: 'absolute',
-              top: '-6px',
-              right: '-12px',
-              background: '#dc2626',
-              color: 'white',
-              borderRadius: '50%',
-              padding: '2px 7px',
-              fontSize: '0.8rem',
-              fontWeight: 'bold',
-              zIndex: 2,
-              minWidth: '22px',
-              textAlign: 'center',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
-            }}>3</span>
-          </a>
-          <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
-            <span>Quick View</span>
-            {showNotificationCard && (
-              <div className="notification-card">
-                <div className="notification-card-header">
-                  <h3 className="notification-card-title">Notifications</h3>
-                </div>
-                <div className="notification-card-body">
-                  <div className="notification-item">
-                    <div className="notification-dot"></div>
-                    <div className="notification-content">
-                      <p className="notification-text">New booking request from John Doe</p>
-                      <span className="notification-time">2 minutes ago</span>
-                    </div>
-                  </div>
-                  <div className="notification-item">
-                    <div className="notification-dot"></div>
-                    <div className="notification-content">
-                      <p className="notification-text">Tournament schedule updated</p>
-                      <span className="notification-time">1 hour ago</span>
-                    </div>
-                  </div>
-                  <div className="notification-item">
-                    <div className="notification-dot"></div>
-                    <div className="notification-content">
-                      <p className="notification-text">Payment received from Royal Club</p>
-                      <span className="notification-time">3 hours ago</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="notification-card-footer">
-                    <Link href="/notifications">
-                    <button className="notification-btn view-all-btn">View All</button>
-                    </Link>
-                  <button
-                    className="notification-btn mark-read-btn"
-                    onClick={() => {
-                      // Mark all unread notifications as read
-                      sampleNotifications.forEach(n => {
-                        if (!n.isRead) n.isRead = true;
-                      });
-                      setShowNotificationCard(false); // Optionally close the card
-                    }}
-                  >
-                    Mark All Read
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="nav-link nav-dropdown">
-            <span>Settings <span className="dropdown-arrow">▼</span></span>
-            <div className="dropdown-menu">
-              <div className="dropdown-item" onClick={() => window.location.href = '/reset-password'}>
-                <svg className="dropdown-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="16" height="16">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                Reset Password
-              </div>
-              <div className="dropdown-item" onClick={() => window.location.href = '/edit-information'}>
-                <svg className="dropdown-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="16" height="16">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 717.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                Edit Information
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="profile-section" onClick={() => setShowProfileCard(!showProfileCard)}>
+      <Navigation currentPage="home" />
+      
+      <div className="profile-section" onClick={() => setShowProfileCard(!showProfileCard)}>
           <div className="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" width="24" height="24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 717.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75v-.75z" />
@@ -150,7 +60,6 @@ export default function HomePage() {
             </div>
           )}
         </div>
-      </nav>
 
       {/* Main Content */}
       <div className="main-content">
