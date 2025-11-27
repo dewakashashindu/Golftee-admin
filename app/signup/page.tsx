@@ -15,8 +15,23 @@ export default function SignupPage() {
       alert("Passwords do not match");
       return;
     }
-    // Simulate signup success
-    router.push("/login");
+    fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: email, password, email }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw await res.json();
+        return res.json();
+      })
+      .then(() => {
+        alert('Signup successful — please check email (confirm if required)');
+        router.push('/login');
+      })
+      .catch((err) => {
+        console.error('signup error', err);
+        alert(err?.error || err?.message || 'Signup failed');
+      });
   };
 
   return (
