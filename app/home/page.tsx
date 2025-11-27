@@ -1050,8 +1050,7 @@ export default function HomePage() {
             {/* Background Circles */}
             <div className="bg-circle-left" />
             <div className="bg-circle-right" />
-            {/* Top Navigation */}
-            <nav className="navigation">
+
               <div className="nav-links">
                 <a href="/home" className="nav-link">Home</a>
                 <a href="/bookings" className="nav-link">Bookings</a>
