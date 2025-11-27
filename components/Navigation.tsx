@@ -8,13 +8,15 @@ interface NavigationProps {
 export default function Navigation({ currentPage }: NavigationProps) {
   const [showNotificationCard, setShowNotificationCard] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
 
   return (
     <>
       {/* Top Navigation */}
       <nav className="navigation">
-        <div className="nav-links">
-          <a href="/home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`}>Home</a>
+        <div className="nav-container">
+          <div className="nav-links">
+            <a href="/home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`}>Home</a>
           <a href="/bookings" className={`nav-link ${currentPage === 'bookings' ? 'active' : ''}`}>Bookings</a>
           <a href="/analytics" className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}>Analytics</a>
           <a href="/equipment" className={`nav-link ${currentPage === 'equipment' ? 'active' : ''}`}>Equipment</a>
@@ -98,18 +100,60 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </div>
             )}
           </div>
+          </div>
+        
+          {/* Profile Section */}
+        <div className="profile-section" onClick={() => setShowProfileCard(!showProfileCard)}>
+          <div className="profile-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" width="24" height="24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75v-.75z" />
+            </svg>
+          </div>
+          <span className="profile-name">Royal Colombo</span>
+          
+          {showProfileCard && (
+            <div className="profile-card">
+              <div className="profile-card-header">
+                <div className="profile-card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" width="32" height="32">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 717.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75.75v-.75z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="profile-card-body">
+                <h3 className="profile-card-title">Royal Colombo Golf Course</h3>
+                <p className="profile-card-email">royalgolf@gmail.com</p>
+                <p className="profile-card-phone">0775698201</p>
+              </div>
+              <div className="profile-card-footer">
+                <button className="profile-btn cancel-btn" onClick={() => setShowProfileCard(false)}>
+                  Cancel
+                </button>
+                <button className="profile-btn logout-btn" onClick={() => window.location.href = '/login'}>
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       </nav>
 
       <style jsx>{`
         .navigation {
-          background: rgba(255, 255, 255, 0.95);
+          background: rgba(255, 255, 255, 0);
           backdrop-filter: blur(10px);
           border-bottom: 1px solid rgba(0, 0, 0, 0.1);
           padding: 2rem 3.5rem 1.5rem 3.5rem;
           position: relative;
           z-index: 1001;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
 
         .nav-links {
@@ -283,6 +327,142 @@ export default function Navigation({ currentPage }: NavigationProps) {
           box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
+        .profile-section {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          position: relative;
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 8px;
+          transition: background 0.2s;
+        }
+
+        .profile-section:hover {
+          background: rgba(0,0,0,0.05);
+        }
+
+        .profile-icon {
+          width: 2.5rem;
+          height: 2.5rem;
+          border-radius: 50%;
+          background: #111;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .profile-name {
+          font-weight: 500;
+          font-size: 1.125rem;
+          color: #111;
+        }
+
+        .profile-card {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          width: 280px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+          border: 1px solid #e5e7eb;
+          z-index: 1000;
+          margin-top: 8px;
+          animation: profileCardFadeIn 0.2s ease-out;
+        }
+
+        .profile-card-header {
+          padding: 1.5rem 1.5rem 1rem;
+          text-align: center;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .profile-card-icon {
+          width: 4rem;
+          height: 4rem;
+          border-radius: 50%;
+          background: #111;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
+        }
+
+        .profile-card-body {
+          padding: 1rem 1.5rem 1.5rem;
+          text-align: center;
+        }
+
+        .profile-card-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #111;
+          margin: 0 0 0.5rem 0;
+          line-height: 1.3;
+        }
+
+        .profile-card-email {
+          font-size: 0.9rem;
+          color: #666;
+          margin: 0.3rem 0;
+        }
+
+        .profile-card-phone {
+          font-size: 0.9rem;
+          color: #666;
+          margin: 0.3rem 0 0 0;
+        }
+
+        .profile-card-footer {
+          padding: 1rem 1.5rem;
+          border-top: 1px solid #f3f4f6;
+          display: flex;
+          gap: 0.75rem;
+          justify-content: center;
+        }
+
+        .profile-btn {
+          padding: 0.6rem 1.2rem;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+          outline: none;
+        }
+
+        .cancel-btn {
+          background: #f3f4f6;
+          color: #666;
+        }
+
+        .cancel-btn:hover {
+          background: #e5e7eb;
+          color: #333;
+        }
+
+        .logout-btn {
+          background: #ef4444;
+          color: white;
+        }
+
+        .logout-btn:hover {
+          background: #dc2626;
+        }
+
+        @keyframes profileCardFadeIn {
+          from { 
+            opacity: 0; 
+            transform: translateY(-8px) scale(0.95); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
+        }
+
         /* Responsive Design */
         @media (max-width: 1400px) {
           .navigation {
@@ -293,6 +473,9 @@ export default function Navigation({ currentPage }: NavigationProps) {
           }
           .nav-link {
             font-size: 1.25rem;
+          }
+          .profile-name {
+            font-size: 1rem;
           }
         }
 
@@ -343,6 +526,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
           .navigation {
             padding: 0.8rem 1rem;
           }
+          .nav-container {
+            flex-direction: column;
+            gap: 1rem;
+          }
           .nav-links {
             gap: 1rem;
             flex-wrap: wrap;
@@ -355,6 +542,12 @@ export default function Navigation({ currentPage }: NavigationProps) {
           .notification-card {
             width: 280px;
             right: -50px;
+          }
+          .profile-section {
+            order: -1;
+          }
+          .profile-name {
+            font-size: 0.95rem;
           }
         }
 
@@ -404,6 +597,12 @@ export default function Navigation({ currentPage }: NavigationProps) {
           .notification-card {
             width: 240px;
             right: -100px;
+          }
+          .profile-name {
+            font-size: 0.85rem;
+          }
+          .profile-card {
+            width: 260px;
           }
         }
 
