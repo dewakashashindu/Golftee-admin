@@ -1,288 +1,86 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Navigation from "../../components/Navigation";
 
 export default function BookingsPage() {
-  const [showProfileCard, setShowProfileCard] = useState(false);
-  const [showNotificationCard, setShowNotificationCard] = useState(false);
-  const [filterType, setFilterType] = useState('all');
-  const [customDate, setCustomDate] = useState('');
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [review, setReview] = useState("");
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState("all");
+  const [customDate, setCustomDate] = useState("");
 
-  // Sample booking data with more dates for filtering
-  const allBookings = [
-    {
-      id: 1,
-      fullName: "John Smith",
-      date: "2025-10-21", // Today
-      startTime: "09:00",
-      endTime: "11:00",
-      noPlayers: 4,
-      nonPlayers: 0,
-      email: "john.smith@email.com",
-      phoneNo: "0771234567",
-      status: "Confirmed"
-    },
-    {
-      id: 2,
-      fullName: "Sarah Johnson",
-      date: "2025-10-21", // Today
-      startTime: "14:00",
-      endTime: "16:00",
-      noPlayers: 2,
-      nonPlayers: 2,
-      email: "sarah.j@email.com",
-      phoneNo: "0779876543",
-      status: "Pending"
-    },
-    {
-      id: 3,
-      fullName: "Mike Wilson",
-      date: "2025-10-22", // This week
-      startTime: "08:00",
-      endTime: "10:30",
-      noPlayers: 3,
-      nonPlayers: 1,
-      email: "mike.w@email.com",
-      phoneNo: "0775555555",
-      status: "Confirmed"
-    },
-    {
-      id: 4,
-      fullName: "Emma Davis",
-      date: "2025-10-23", // This week
-      startTime: "16:30",
-      endTime: "18:30",
-      noPlayers: 2,
-      nonPlayers: 0,
-      email: "emma.davis@email.com",
-      phoneNo: "0773333333",
-      status: "Cancelled"
-    },
-    {
-      id: 5,
-      fullName: "Robert Brown",
-      date: "2025-10-25", // This week
-      startTime: "10:00",
-      endTime: "12:00",
-      noPlayers: 4,
-      nonPlayers: 0,
-      email: "robert.b@email.com",
-      phoneNo: "0777777777",
-      status: "Confirmed"
-    },
-    {
-      id: 6,
-      fullName: "Lisa White",
-      date: "2025-10-28", // This month
-      startTime: "15:00",
-      endTime: "17:00",
-      noPlayers: 2,
-      nonPlayers: 2,
-      email: "lisa.w@email.com",
-      phoneNo: "0766666666",
-      status: "Pending"
-    },
-    {
-      id: 7,
-      fullName: "David Green",
-      date: "2025-11-05", // Next month
-      startTime: "09:30",
-      endTime: "11:30",
-      noPlayers: 3,
-      nonPlayers: 1,
-      email: "david.g@email.com",
-      phoneNo: "0755555555",
-      status: "Confirmed"
-    }
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("/api/bookings")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (mounted) setBookings(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (mounted) setError(String(err));
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  // Filter bookings based on selected filter type
   const filteredBookings = useMemo(() => {
-    const today = new Date('2025-10-21'); // Current date
+    if (!bookings) return [];
+    const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    return allBookings.filter(booking => {
+    return bookings.filter((booking: any) => {
       const bookingDate = new Date(booking.date);
-      
       switch (filterType) {
-        case 'today':
-          return booking.date === today.toISOString().split('T')[0];
-        case 'week':
+        case "today":
+          return booking.date === today.toISOString().split("T")[0];
+        case "week":
           return bookingDate >= startOfWeek && bookingDate <= endOfWeek;
-        case 'month':
+        case "month":
           return bookingDate >= startOfMonth && bookingDate <= endOfMonth;
-        case 'custom':
+        case "custom":
           return customDate ? booking.date === customDate : true;
         default:
           return true;
       }
     });
-  }, [filterType, customDate]);
+  }, [bookings, filterType, customDate]);
 
   return (
     <div className="bookings-container">
-      {/* Background Circles */}
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />
-      
-      {/* Top Navigation */}
-      <nav className="navigation">
-        <div className="nav-links">
-          <a href="/home" className="nav-link">Home</a>
-          <a href="/bookings" className="nav-link">Bookings</a>
-          <a href="/support" className="nav-link">Support</a>
-          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
-            Notifications
-            {/* Unread badge */}
-            <span style={{
-              position: 'absolute',
-              top: '-6px',
-              right: '-12px',
-              background: '#dc2626',
-              color: 'white',
-              borderRadius: '50%',
-              padding: '2px 7px',
-              fontSize: '0.8rem',
-              fontWeight: 'bold',
-              zIndex: 2,
-              minWidth: '22px',
-              textAlign: 'center',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
-            }}>3</span>
-          </a>
-          <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
-            <span>Quick View</span>
-            {showNotificationCard && (
-              <div className="notification-card">
-                <div className="notification-card-header">
-                  <h3 className="notification-card-title">Notifications</h3>
-                </div>
-                <div className="notification-card-body">
-                  <div className="notification-item">
-                    <div className="notification-dot"></div>
-                    <div className="notification-content">
-                      <p className="notification-text">New booking request from John Doe</p>
-                      <span className="notification-time">2 minutes ago</span>
-                    </div>
-                  </div>
-                  <div className="notification-item">
-                    <div className="notification-dot"></div>
-                    <div className="notification-content">
-                      <p className="notification-text">Tournament schedule updated</p>
-                      <span className="notification-time">1 hour ago</span>
-                    </div>
-                  </div>
-                  <div className="notification-item">
-                    <div className="notification-dot"></div>
-                    <div className="notification-content">
-                      <p className="notification-text">Payment received from Royal Club</p>
-                      <span className="notification-time">3 hours ago</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="notification-card-footer">
-                  <button
-                    className="notification-btn view-all-btn"
-                    onClick={() => window.location.href = '/notifications'}
-                  >
-                    View All
-                  </button>
-                    <button
-                    className="notification-btn mark-read-btn"
-                    onClick={() => {
-                      // Simulate marking all notifications as read
-                      alert("All notifications marked as read.");
-                      setShowNotificationCard(false);
-                    }}
-                    >
-                    Mark All Read
-                    </button>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="nav-link nav-dropdown">
-            <span>Settings <span className="dropdown-arrow">▼</span></span>
-            <div className="dropdown-menu">
-              <div className="dropdown-item" onClick={() => window.location.href = '/reset-password'}>
-                <svg className="dropdown-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="16" height="16">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                Reset Password
-              </div>
-              <div className="dropdown-item" onClick={() => window.location.href = '/edit-profile'}>
-                <svg className="dropdown-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="16" height="16">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 717.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                Edit Profile
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="profile-section" onClick={() => setShowProfileCard(!showProfileCard)}>
-          <div className="profile-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" width="24" height="24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 717.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75v-.75z" />
-            </svg>
-          </div>
-          <span className="profile-name">Royal Colombo</span>
-          
-          {showProfileCard && (
-            <div className="profile-card">
-              <div className="profile-card-header">
-                <div className="profile-card-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" width="32" height="32">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 717.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75.75v-.75z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="profile-card-body">
-                <h3 className="profile-card-title">Royal Colombo Golf Course</h3>
-                <p className="profile-card-email">royalgolf@gmail.com</p>
-                <p className="profile-card-phone">0775698201</p>
-              </div>
-              <div className="profile-card-footer">
-                <button className="profile-btn cancel-btn" onClick={() => setShowProfileCard(false)}>
-                  Cancel
-                </button>
-                <button className="profile-btn logout-btn" onClick={() => window.location.href = '/login'}>
-                  Logout
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
 
-      {/* Main Content */}
+      <Navigation currentPage="bookings" />
+
       <div className="main-content">
         <div className="page-header">
           <div className="header-top">
             <h1 className="page-title">
-              {filterType === 'all' && 'All Bookings'}
-              {filterType === 'today' && 'Today\'s Bookings'}
-              {filterType === 'week' && 'This Week\'s Bookings'}
-              {filterType === 'month' && 'This Month\'s Bookings'}
-              {filterType === 'custom' && customDate && `Bookings for ${new Date(customDate).toLocaleDateString()}`}
-              {filterType === 'custom' && !customDate && 'Custom Date Bookings'}
+              {filterType === "all" && "All Bookings"}
+              {filterType === "today" && "Today's Bookings"}
+              {filterType === "week" && "This Week's Bookings"}
+              {filterType === "month" && "This Month's Bookings"}
+              {filterType === "custom" && customDate && `Bookings for ${new Date(customDate).toLocaleDateString()}`}
+              {filterType === "custom" && !customDate && "Custom Date Bookings"}
             </h1>
-            
-            {/* Filter Dropdown */}
+
             <div className="filter-dropdown">
-              <select 
-                value={filterType} 
-                onChange={(e) => setFilterType(e.target.value)}
-                className="filter-select"
-              >
+              <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="filter-select">
                 <option value="all">All Bookings</option>
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
@@ -291,112 +89,103 @@ export default function BookingsPage() {
               </select>
             </div>
           </div>
-          
-          {/* Custom Date Section - appears when Custom Date is selected */}
-          {filterType === 'custom' && (
+
+          {filterType === "custom" && (
             <div className="custom-date-section">
-              <input
-                type="date"
-                value={customDate}
-                onChange={(e) => setCustomDate(e.target.value)}
-                className="date-input"
-                placeholder="Select date"
-              />
+              <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)} className="date-input" />
               {customDate && (
-                <button 
-                  className="clear-date-btn"
-                  onClick={() => setCustomDate('')}
-                >
-                  Clear
-                </button>
+                <button className="clear-date-btn" onClick={() => setCustomDate("")}>Clear</button>
               )}
             </div>
           )}
-          
-          {/* Results Count */}
-          <div className="results-count">
-            Showing {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-        
-        <div className="table-container">
-          {/* Desktop Table View */}
-          <table className="bookings-table">
-            <thead>
-              <tr className="table-header">
-                <th>Full Name</th>
-                <th>Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>No. Players</th>
-                <th>Non Players</th>
-                <th>email</th>
-                <th>Phone No</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBookings.map((booking) => (
-                <tr key={booking.id} className="table-row">
-                  <td>{booking.fullName}</td>
-                  <td>{booking.date}</td>
-                  <td>{booking.startTime}</td>
-                  <td>{booking.endTime}</td>
-                  <td>{booking.noPlayers}</td>
-                  <td>{booking.nonPlayers}</td>
-                  <td>{booking.email}</td>
-                  <td>{booking.phoneNo}</td>
-                  <td>
-                    <span className={`status-badge ${booking.status.toLowerCase()}`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
 
-          {/* Mobile Card View */}
-          <div className="mobile-booking-cards">
-            {filteredBookings.map((booking) => (
-              <div key={booking.id} className="booking-card">
-                <div className="booking-card-header">
-                  <div className="booking-card-name">{booking.fullName}</div>
-                  <span className={`status-badge ${booking.status.toLowerCase()}`}>
-                    {booking.status}
-                  </span>
-                </div>
-                <div className="booking-card-details">
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Date</span>
-                    <span className="booking-detail-value">{booking.date}</span>
+          <div className="results-count">Showing {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}</div>
+        </div>
+
+        <div className="table-container">
+          {loading && <div>Loading bookings…</div>}
+          {error && <div className="error">Error: {error}</div>}
+
+          {!loading && !error && (
+            <>
+              <table className="bookings-table">
+                <thead>
+                  <tr className="table-header">
+                    <th>Full Name</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>No. Players</th>
+                    <th>Non Players</th>
+                    <th>Email</th>
+                    <th>Phone No</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBookings.map((booking: any) => (
+                    <tr key={booking.id} className="table-row">
+                      <td>{booking.fullName}</td>
+                      <td>{booking.date}</td>
+                      <td>{booking.startTime}</td>
+                      <td>{booking.endTime}</td>
+                      <td>{booking.noPlayers}</td>
+                      <td>{booking.nonPlayers}</td>
+                      <td>{booking.email}</td>
+                      <td>{booking.phoneNo}</td>
+                      <td>
+                        <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>
+                          {booking.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="mobile-booking-cards">
+                {filteredBookings.map((booking: any) => (
+                  <div key={booking.id} className="booking-card">
+                    <div className="booking-card-header">
+                      <div className="booking-card-name">{booking.fullName}</div>
+                      <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>{booking.status}</span>
+                    </div>
+                    <div className="booking-card-details">
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Date</span>
+                        <span className="booking-detail-value">{booking.date}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Time</span>
+                        <span className="booking-detail-value">{booking.startTime} - {booking.endTime}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Players</span>
+                        <span className="booking-detail-value">{booking.noPlayers}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Non-Players</span>
+                        <span className="booking-detail-value">{booking.nonPlayers}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Email</span>
+                        <span className="booking-detail-value">{booking.email}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Phone</span>
+                        <span className="booking-detail-value">{booking.phoneNo}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Time</span>
-                    <span className="booking-detail-value">{booking.startTime} - {booking.endTime}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Players</span>
-                    <span className="booking-detail-value">{booking.noPlayers}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Non-Players</span>
-                    <span className="booking-detail-value">{booking.nonPlayers}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Email</span>
-                    <span className="booking-detail-value">{booking.email}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Phone</span>
-                    <span className="booking-detail-value">{booking.phoneNo}</span>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
 
       {/* Footer Section */}
       <footer className="footer-section">
