@@ -183,10 +183,6 @@ export default function BookingsPage() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
       {/* Footer Section */}
       <footer className="footer-section">
         <div className="footer-content">
