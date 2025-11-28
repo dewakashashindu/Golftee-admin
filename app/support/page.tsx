@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Navigation from "../../components/Navigation";
 
 export default function SupportPage() {
   const [feedback, setFeedback] = useState("");
@@ -30,6 +31,7 @@ export default function SupportPage() {
 
   return (
     <div className="support-container">
+      <Navigation currentPage="support" />
       <title>Support & Help Center</title>
       <div className="page-header">
         <h1 className="page-title">Support & Help Center</h1>
