@@ -1,162 +1,89 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 
 export default function BookingsPage() {
-  const [showProfileCard, setShowProfileCard] = useState(false);
-  const [showNotificationCard, setShowNotificationCard] = useState(false);
-  const [filterType, setFilterType] = useState('all');
-  const [customDate, setCustomDate] = useState('');
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [review, setReview] = useState("");
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState("all");
+  const [customDate, setCustomDate] = useState("");
+  const [rating, setRating] = useState<number>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [review, setReview] = useState<string>("");
 
-  // Sample booking data with more dates for filtering
-  const allBookings = [
-    {
-      id: 1,
-      fullName: "John Smith",
-      date: "2025-10-21", // Today
-      startTime: "09:00",
-      endTime: "11:00",
-      noPlayers: 4,
-      nonPlayers: 0,
-      email: "john.smith@email.com",
-      phoneNo: "0771234567",
-      status: "Confirmed"
-    },
-    {
-      id: 2,
-      fullName: "Sarah Johnson",
-      date: "2025-10-21", // Today
-      startTime: "14:00",
-      endTime: "16:00",
-      noPlayers: 2,
-      nonPlayers: 2,
-      email: "sarah.j@email.com",
-      phoneNo: "0779876543",
-      status: "Pending"
-    },
-    {
-      id: 3,
-      fullName: "Mike Wilson",
-      date: "2025-10-22", // This week
-      startTime: "08:00",
-      endTime: "10:30",
-      noPlayers: 3,
-      nonPlayers: 1,
-      email: "mike.w@email.com",
-      phoneNo: "0775555555",
-      status: "Confirmed"
-    },
-    {
-      id: 4,
-      fullName: "Emma Davis",
-      date: "2025-10-23", // This week
-      startTime: "16:30",
-      endTime: "18:30",
-      noPlayers: 2,
-      nonPlayers: 0,
-      email: "emma.davis@email.com",
-      phoneNo: "0773333333",
-      status: "Cancelled"
-    },
-    {
-      id: 5,
-      fullName: "Robert Brown",
-      date: "2025-10-25", // This week
-      startTime: "10:00",
-      endTime: "12:00",
-      noPlayers: 4,
-      nonPlayers: 0,
-      email: "robert.b@email.com",
-      phoneNo: "0777777777",
-      status: "Confirmed"
-    },
-    {
-      id: 6,
-      fullName: "Lisa White",
-      date: "2025-10-28", // This month
-      startTime: "15:00",
-      endTime: "17:00",
-      noPlayers: 2,
-      nonPlayers: 2,
-      email: "lisa.w@email.com",
-      phoneNo: "0766666666",
-      status: "Pending"
-    },
-    {
-      id: 7,
-      fullName: "David Green",
-      date: "2025-11-05", // Next month
-      startTime: "09:30",
-      endTime: "11:30",
-      noPlayers: 3,
-      nonPlayers: 1,
-      email: "david.g@email.com",
-      phoneNo: "0755555555",
-      status: "Confirmed"
-    }
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("/api/bookings")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (mounted) setBookings(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (mounted) setError(String(err));
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  // Filter bookings based on selected filter type
   const filteredBookings = useMemo(() => {
-    const today = new Date('2025-10-21'); // Current date
+    if (!bookings) return [];
+    const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    return allBookings.filter(booking => {
+    return bookings.filter((booking: any) => {
       const bookingDate = new Date(booking.date);
-      
       switch (filterType) {
-        case 'today':
-          return booking.date === today.toISOString().split('T')[0];
-        case 'week':
+        case "today":
+          return booking.date === today.toISOString().split("T")[0];
+        case "week":
           return bookingDate >= startOfWeek && bookingDate <= endOfWeek;
-        case 'month':
+        case "month":
           return bookingDate >= startOfMonth && bookingDate <= endOfMonth;
-        case 'custom':
+        case "custom":
           return customDate ? booking.date === customDate : true;
         default:
           return true;
       }
     });
-  }, [filterType, customDate]);
+  }, [bookings, filterType, customDate]);
 
   return (
     <div className="bookings-container">
-      {/* Background Circles */}
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />
-      
+
       <Navigation currentPage="bookings" />
 
-      {/* Main Content */}
       <div className="main-content">
         <div className="page-header">
           <div className="header-top">
             <h1 className="page-title">
-              {filterType === 'all' && 'All Bookings'}
-              {filterType === 'today' && 'Today\'s Bookings'}
-              {filterType === 'week' && 'This Week\'s Bookings'}
-              {filterType === 'month' && 'This Month\'s Bookings'}
-              {filterType === 'custom' && customDate && `Bookings for ${new Date(customDate).toLocaleDateString()}`}
-              {filterType === 'custom' && !customDate && 'Custom Date Bookings'}
+              {filterType === "all" && "All Bookings"}
+              {filterType === "today" && "Today's Bookings"}
+              {filterType === "week" && "This Week's Bookings"}
+              {filterType === "month" && "This Month's Bookings"}
+              {filterType === "custom" && customDate && `Bookings for ${new Date(customDate).toLocaleDateString()}`}
+              {filterType === "custom" && !customDate && "Custom Date Bookings"}
             </h1>
-            
-            {/* Filter Dropdown */}
+
             <div className="filter-dropdown">
-              <select 
-                value={filterType} 
-                onChange={(e) => setFilterType(e.target.value)}
-                className="filter-select"
-              >
+              <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="filter-select">
                 <option value="all">All Bookings</option>
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
@@ -165,113 +92,100 @@ export default function BookingsPage() {
               </select>
             </div>
           </div>
-          
-          {/* Custom Date Section - appears when Custom Date is selected */}
-          {filterType === 'custom' && (
+
+          {filterType === "custom" && (
             <div className="custom-date-section">
-              <input
-                type="date"
-                value={customDate}
-                onChange={(e) => setCustomDate(e.target.value)}
-                className="date-input"
-                placeholder="Select date"
-              />
+              <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)} className="date-input" />
               {customDate && (
-                <button 
-                  className="clear-date-btn"
-                  onClick={() => setCustomDate('')}
-                >
-                  Clear
-                </button>
+                <button className="clear-date-btn" onClick={() => setCustomDate("")}>Clear</button>
               )}
             </div>
           )}
-          
-          {/* Results Count */}
-          <div className="results-count">
-            Showing {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-        
-        <div className="table-container">
-          {/* Desktop Table View */}
-          <table className="bookings-table">
-            <thead>
-              <tr className="table-header">
-                <th>Full Name</th>
-                <th>Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>No. Players</th>
-                <th>Non Players</th>
-                <th>email</th>
-                <th>Phone No</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBookings.map((booking) => (
-                <tr key={booking.id} className="table-row">
-                  <td>{booking.fullName}</td>
-                  <td>{booking.date}</td>
-                  <td>{booking.startTime}</td>
-                  <td>{booking.endTime}</td>
-                  <td>{booking.noPlayers}</td>
-                  <td>{booking.nonPlayers}</td>
-                  <td>{booking.email}</td>
-                  <td>{booking.phoneNo}</td>
-                  <td>
-                    <span className={`status-badge ${booking.status.toLowerCase()}`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
 
-          {/* Mobile Card View */}
-          <div className="mobile-booking-cards">
-            {filteredBookings.map((booking) => (
-              <div key={booking.id} className="booking-card">
-                <div className="booking-card-header">
-                  <div className="booking-card-name">{booking.fullName}</div>
-                  <span className={`status-badge ${booking.status.toLowerCase()}`}>
-                    {booking.status}
-                  </span>
-                </div>
-                <div className="booking-card-details">
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Date</span>
-                    <span className="booking-detail-value">{booking.date}</span>
+          <div className="results-count">Showing {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}</div>
+        </div>
+
+        <div className="table-container">
+          {loading && <div>Loading bookings…</div>}
+          {error && <div className="error">Error: {error}</div>}
+
+          {!loading && !error && (
+            <>
+              <table className="bookings-table">
+                <thead>
+                  <tr className="table-header">
+                    <th>Full Name</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>No. Players</th>
+                    <th>Non Players</th>
+                    <th>Email</th>
+                    <th>Phone No</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBookings.map((booking: any) => (
+                    <tr key={booking.id} className="table-row">
+                      <td>{booking.fullName}</td>
+                      <td>{booking.date}</td>
+                      <td>{booking.startTime}</td>
+                      <td>{booking.endTime}</td>
+                      <td>{booking.noPlayers}</td>
+                      <td>{booking.nonPlayers}</td>
+                      <td>{booking.email}</td>
+                      <td>{booking.phoneNo}</td>
+                      <td>
+                        <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>
+                          {booking.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="mobile-booking-cards">
+                {filteredBookings.map((booking: any) => (
+                  <div key={booking.id} className="booking-card">
+                    <div className="booking-card-header">
+                      <div className="booking-card-name">{booking.fullName}</div>
+                      <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>{booking.status}</span>
+                    </div>
+                    <div className="booking-card-details">
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Date</span>
+                        <span className="booking-detail-value">{booking.date}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Time</span>
+                        <span className="booking-detail-value">{booking.startTime} - {booking.endTime}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Players</span>
+                        <span className="booking-detail-value">{booking.noPlayers}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Non-Players</span>
+                        <span className="booking-detail-value">{booking.nonPlayers}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Email</span>
+                        <span className="booking-detail-value">{booking.email}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Phone</span>
+                        <span className="booking-detail-value">{booking.phoneNo}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Time</span>
-                    <span className="booking-detail-value">{booking.startTime} - {booking.endTime}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Players</span>
-                    <span className="booking-detail-value">{booking.noPlayers}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Non-Players</span>
-                    <span className="booking-detail-value">{booking.nonPlayers}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Email</span>
-                    <span className="booking-detail-value">{booking.email}</span>
-                  </div>
-                  <div className="booking-detail">
-                    <span className="booking-detail-label">Phone</span>
-                    <span className="booking-detail-value">{booking.phoneNo}</span>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
-
       {/* Footer Section */}
       <footer className="footer-section">
         <div className="footer-content">
