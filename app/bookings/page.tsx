@@ -9,6 +9,9 @@ export default function BookingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState("all");
   const [customDate, setCustomDate] = useState("");
+  const [rating, setRating] = useState<number>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [review, setReview] = useState<string>("");
 
   useEffect(() => {
     let mounted = true;
