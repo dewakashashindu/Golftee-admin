@@ -28,3 +28,29 @@ Update your frontend `.env.local` to point to the backend during development:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
+
+Notes
+- If you are running locally the backend uses Prisma with a SQLite DB by default. The `DATABASE_URL` is set in `backend/.env` and points at `prisma/dev.db`.
+- On `npm install` the project runs `prisma generate` (via `postinstall`) to ensure the Prisma client is available.
+- If you prefer to use Supabase instead, set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env` (do not commit service keys publicly).
+ - If you prefer to use Supabase instead, set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env` (do not commit service keys publicly).
+
+Local DB and seeding
+- The backend uses Prisma with a local SQLite DB by default (`prisma/dev.db`).
+- To create tables on the configured `DATABASE_URL` and generate the Prisma client:
+
+```powershell
+cd backend
+npm install
+npm run prisma:generate   # generates Prisma client
+npm run prisma:push       # push schema to the database (creates tables)
+```
+
+- To populate the DB with example data for local development run:
+
+```powershell
+npm run seed
+```
+
+Switching to Supabase Postgres
+- To switch to your Supabase Postgres DB, update `backend/.env` with the Postgres connection string (e.g. `DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.<project>.supabase.co:5432/postgres`) and run `npm run prisma:push` to create tables remotely. Consider creating proper migrations for production usage.
