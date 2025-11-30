@@ -27,6 +27,19 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Simple request logging middleware to capture request id, time and body for debugging
+app.use((req, res, next) => {
+  req._startTime = Date.now();
+  // Log incoming request summary
+  console.log(`[REQ] ${req.method} ${req.originalUrl} - from ${req.ip} - body=${JSON.stringify(req.body || {})}`);
+  // capture finish to log response time
+  res.on('finish', () => {
+    const ms = Date.now() - req._startTime;
+    console.log(`[RES] ${req.method} ${req.originalUrl} ${res.statusCode} - ${ms}ms`);
+  });
+  next();
+});
+
 // In-memory stores (demo only / fallback)
 const users = [];
 const bookings = [];
@@ -472,4 +485,25 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`GolfTee backend listening on port ${PORT}`);
+  console.log(`Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}, DB=${prisma ? 'prisma' : (supabase ? 'supabase' : 'in-memory')}`);
 });
+
+// Central error handler (logs stack and returns JSON)
+app.use((err, req, res, next) => {
+  console.error('[ERROR] Unhandled error in request:', err && err.stack ? err.stack : err);
+  if (res.headersSent) return next(err);
+  res.status(err?.status || 500).json({ error: err?.message || 'internal server error' });
+});
+
+// Log and exit on uncaught exceptions / unhandled rejections to avoid silent failures
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] uncaughtException:', err && err.stack ? err.stack : err);
+  // give logs a moment to flush then exit
+  setTimeout(() => process.exit(1), 100);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] unhandledRejection:', reason && reason.stack ? reason.stack : reason);
+  setTimeout(() => process.exit(1), 100);
+});
+
