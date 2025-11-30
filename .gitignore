@@ -45,3 +45,6 @@ backend/dev.db-journal
 next-env.d.ts
 
 .env
+
+!backend/.env.example
+backend/prisma/*.db
