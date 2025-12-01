@@ -1,7 +1,9 @@
+
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
+import Footer from "../../components/Footer";
 
 interface Tournament {
   id: string;
@@ -9,622 +11,840 @@ interface Tournament {
   date: string;
   time: string;
   format: string;
-  participants: number;
-  maxParticipants: number;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   description: string;
+  location: string;
+  maxParticipants: number;
+  entryFee: string;
+  prizePool: string;
+  poster: string;
+  participants: string[];
 }
 
+const initialTournaments: Tournament[] = [
+  {
+    id: "1",
+    name: "Spring Open",
+    date: "2025-04-15",
+    time: "09:00",
+    format: "Stroke Play",
+    description: "Annual spring tournament for all members.",
+    location: "Main Golf Course",
+    maxParticipants: 50,
+    entryFee: "$25",
+    prizePool: "$500",
+    poster: "",
+    participants: [],
+  },
+];
+
 export default function EventsPage() {
+  const [tournaments, setTournaments] = useState<Tournament[]>(initialTournaments);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    date: '',
-    time: '',
-    format: '',
-    maxParticipants: '',
-    description: ''
+  const [showProfileCard, setShowProfileCard] = useState(false);
+  const [showNotificationCard, setShowNotificationCard] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    date: "",
+    time: "",
+    format: "",
+    description: "",
+    location: "",
+    maxParticipants: "",
+    entryFee: "",
+    prizePool: "",
+    poster: "",
   });
 
-  const [tournaments, setTournaments] = useState<Tournament[]>([
-    {
-      id: '1',
-      name: 'Monthly Championship',
-      date: '2025-12-15',
-      time: '08:00',
-      format: 'Stroke Play',
-      participants: 24,
-      maxParticipants: 32,
-      status: 'upcoming',
-      description: 'Monthly championship tournament for all members'
-    },
-    {
-      id: '2',
-      name: 'Weekend Classic',
-      date: '2025-12-08',
-      time: '09:30',
-      format: 'Match Play',
-      participants: 16,
-      maxParticipants: 16,
-      status: 'completed',
-      description: 'Weekend classic tournament'
-    },
-    {
-      id: '3',
-      name: 'New Year Tournament',
-      date: '2026-01-01',
-      time: '10:00',
-      format: 'Best Ball',
-      participants: 8,
-      maxParticipants: 20,
-      status: 'upcoming',
-      description: 'Special New Year celebration tournament'
-    }
-  ]);
+  function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setForm({ ...form, poster: event.target.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function handleCreateTournament(e: React.FormEvent) {
     e.preventDefault();
     if (editingId) {
-      setTournaments(prev => prev.map(t => 
+      // Update existing tournament
+      const updatedTournaments = tournaments.map(t => 
         t.id === editingId 
-          ? { ...t, ...formData, participants: t.participants, maxParticipants: parseInt(formData.maxParticipants) }
+          ? { ...t, name: form.name, date: form.date, format: form.format, description: form.description, poster: form.poster }
           : t
-      ));
+      );
+      setTournaments(updatedTournaments);
       setEditingId(null);
     } else {
+      // Create new tournament
       const newTournament: Tournament = {
-        id: Date.now().toString(),
-        ...formData,
-        maxParticipants: parseInt(formData.maxParticipants),
-        participants: 0,
-        status: 'upcoming'
+        id: (tournaments.length + 1).toString(),
+        name: form.name,
+        date: form.date,
+        time: form.time,
+        format: form.format,
+        description: form.description,
+        location: form.location,
+        maxParticipants: parseInt(form.maxParticipants) || 0,
+        entryFee: form.entryFee,
+        prizePool: form.prizePool,
+        poster: form.poster,
+        participants: [],
       };
-      setTournaments(prev => [...prev, newTournament]);
+      setTournaments([...tournaments, newTournament]);
     }
-    setFormData({ name: '', date: '', time: '', format: '', maxParticipants: '', description: '' });
+    setForm({ name: "", date: "", time: "", format: "", description: "", location: "", maxParticipants: "", entryFee: "", prizePool: "", poster: "" });
     setShowForm(false);
-  };
+  }
 
-  const handleEdit = (tournament: Tournament) => {
-    setFormData({
+  function handleEditTournament(tournament: Tournament) {
+    setForm({
       name: tournament.name,
       date: tournament.date,
       time: tournament.time,
       format: tournament.format,
+      description: tournament.description,
+      location: tournament.location,
       maxParticipants: tournament.maxParticipants.toString(),
-      description: tournament.description
+      entryFee: tournament.entryFee,
+      prizePool: tournament.prizePool,
+      poster: tournament.poster,
     });
     setEditingId(tournament.id);
     setShowForm(true);
-  };
+  }
 
-  const handleDelete = (id: string) => {
-    setTournaments(prev => prev.filter(t => t.id !== id));
-  };
+  function handleDeleteTournament(id: string) {
+    if (confirm("Are you sure you want to delete this tournament?")) {
+      setTournaments(tournaments.filter(t => t.id !== id));
+    }
+  }
 
-  const handleCancelEdit = () => {
-    setFormData({ name: '', date: '', time: '', format: '', maxParticipants: '', description: '' });
+  function handleCancelEdit() {
+    setForm({ name: "", date: "", time: "", format: "", description: "", location: "", maxParticipants: "", entryFee: "", prizePool: "", poster: "" });
     setEditingId(null);
     setShowForm(false);
-  };
+  }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f5f5f5',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Background Circles */}
+    <>
       <div style={{
-        position: 'absolute',
-        top: '-100px',
-        left: '-100px',
-        width: '300px',
-        height: '300px',
-        background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
-        borderRadius: '50%',
-        opacity: 0.1,
-        zIndex: 0
-      }} />
-      <div style={{
-        position: 'absolute',
-        top: '200px',
-        right: '-150px',
-        width: '400px',
-        height: '400px',
-        background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
-        borderRadius: '50%',
-        opacity: 0.08,
-        zIndex: 0
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '-200px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '500px',
-        height: '500px',
-        background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
-        borderRadius: '50%',
-        opacity: 0.05,
-        zIndex: 0
-      }} />
-      
-      <Navigation currentPage="events" />
-      
-      <div style={{
-        maxWidth: '900px',
-        margin: '2rem auto',
-        padding: '3rem',
-        background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,250,252,0.9))',
-        borderRadius: '24px',
+        minHeight: '100vh',
+        background: '#f5f5f5',
         position: 'relative',
-        zIndex: 1,
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 25px 50px rgba(0,0,0,0.15)',
-        border: '1px solid rgba(255,255,255,0.3)'
+        overflow: 'hidden'
       }}>
-        <h1 style={{
-          fontSize: '3rem',
-          marginBottom: '2rem',
-          background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontWeight: '800',
-          textAlign: 'center',
-          position: 'relative',
-          textShadow: '0 4px 8px rgba(0,0,0,0.1)'
-        }}>
-          Tournament Events
-        </h1>
-
+        {/* Background Circles */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem'
+          position: 'fixed',
+          left: '-300px',
+          top: '-250px',
+          width: '800px',
+          height: '800px',
+          background: '#b8e6c1',
+          borderRadius: '50%',
+          opacity: 1,
+          zIndex: 0
+        }} />
+        <div style={{
+          position: 'fixed',
+          right: '-200px',
+          bottom: '-300px',
+          width: '800px',
+          height: '800px',
+          background: '#b8e6c1',
+          borderRadius: '50%',
+          opacity: 1,
+          zIndex: 0
+        }} />
+        
+        <Navigation currentPage="events" />
+        
+        <div style={{
+          maxWidth: '900px',
+          margin: '2rem auto',
+          padding: '3rem',
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,250,252,0.9))',
+          borderRadius: '24px',
+          position: 'relative',
+          zIndex: 1,
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.15)',
+          border: '1px solid rgba(255,255,255,0.3)'
         }}>
-          <p style={{
-            fontSize: '1.1rem',
-            color: '#666',
-            margin: 0
-          }}>
-            Manage golf tournaments and events
-          </p>
-          <button
-            onClick={() => setShowForm(true)}
+          <h1 style={{
+            fontSize: '3rem',
+            marginBottom: '2rem',
+            background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: '800',
+            textAlign: 'center',
+            position: 'relative',
+            textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}>Tournaments & Events</h1>
+          <button 
             style={{
-              background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
+              background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #059669 100%)',
               color: 'white',
               border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              fontWeight: '600',
+              padding: '1rem 2.5rem',
+              borderRadius: '20px',
+              fontSize: '1.2rem',
+              fontWeight: '700',
               cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+              marginBottom: '3rem',
+              boxShadow: '0 8px 25px rgba(22, 163, 74, 0.4)',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              display: 'block',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              position: 'relative',
+              overflow: 'hidden'
             }}
+            onClick={() => setShowForm(true)}
           >
-            + Add Tournament
+            {editingId ? "Edit Tournament" : "Create Tournament"}
           </button>
-        </div>
-
-        {/* Tournament Form */}
-        {showForm && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '16px',
-              width: '90%',
-              maxWidth: '500px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-            }}>
-              <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>
-                {editingId ? 'Edit Tournament' : 'Add New Tournament'}
-              </h3>
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#555' }}>
-                    Tournament Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '1rem'
-                    }}
-                    required
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#555' }}>
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '1rem'
-                      }}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#555' }}>
-                      Time
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '1rem'
-                      }}
-                      required
-                    />
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#555' }}>
-                      Format
-                    </label>
-                    <select
-                      value={formData.format}
-                      onChange={(e) => setFormData({ ...formData, format: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '1rem'
-                      }}
-                      required
-                    >
-                      <option value="">Select Format</option>
-                      <option value="Stroke Play">Stroke Play</option>
-                      <option value="Match Play">Match Play</option>
-                      <option value="Best Ball">Best Ball</option>
-                      <option value="Scramble">Scramble</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#555' }}>
-                      Max Participants
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.maxParticipants}
-                      onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '1rem'
-                      }}
-                      required
-                    />
-                  </div>
-                </div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#555' }}>
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '1rem',
-                      minHeight: '80px',
-                      resize: 'vertical'
-                    }}
-                    required
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    style={{
-                      background: '#f3f4f6',
-                      color: '#374151',
-                      border: 'none',
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    style={{
-                      background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {editingId ? 'Update' : 'Create'} Tournament
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Tournaments Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem'
-        }}>
-          {tournaments.map(tournament => (
-            <div key={tournament.id} style={{
-              background: 'rgba(255,255,255,0.9)',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              border: '1px solid rgba(255,255,255,0.5)',
-              transition: 'transform 0.2s, box-shadow 0.2s'
-            }}>
+          {showForm && (
+            <form 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                marginBottom: '2rem',
+                background: 'rgba(240, 253, 244, 0.8)',
+                padding: '1.5rem',
+                borderRadius: '15px',
+                backdropFilter: 'blur(5px)',
+                border: '1px solid rgba(22, 163, 74, 0.1)'
+              }}
+              onSubmit={handleCreateTournament}
+            >
+              <input
+                name="name"
+                placeholder="Tournament Name"
+                value={form.name}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="date"
+                type="date"
+                value={form.date}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="time"
+                type="time"
+                value={form.time}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="location"
+                placeholder="Location (e.g. Main Golf Course)"
+                value={form.location}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="format"
+                placeholder="Format (e.g. Stroke Play)"
+                value={form.format}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="maxParticipants"
+                type="number"
+                placeholder="Maximum Participants"
+                value={form.maxParticipants}
+                onChange={handleInput}
+                required
+                min="1"
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="entryFee"
+                placeholder="Entry Fee (e.g. $25)"
+                value={form.entryFee}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <input
+                name="prizePool"
+                placeholder="Prize Pool (e.g. $500)"
+                value={form.prizePool}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <textarea
+                name="description"
+                placeholder="Description"
+                value={form.description}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease',
+                  minHeight: '100px',
+                  resize: 'vertical'
+                }}
+              />
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '1rem'
+                flexDirection: 'column',
+                gap: '0.5rem'
               }}>
-                <h3 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: '700',
-                  color: '#111',
-                  margin: 0
-                }}>
-                  {tournament.name}
-                </h3>
-                <span style={{
-                  background: tournament.status === 'upcoming' ? '#22c55e' : 
-                            tournament.status === 'completed' ? '#6b7280' : '#f59e0b',
+                <label htmlFor="poster" style={{
+                  fontWeight: '500',
+                  color: '#374151'
+                }}>Event Poster:</label>
+                <input
+                  id="poster"
+                  name="poster"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInput}
+                  style={{
+                    padding: '0.5rem',
+                    border: '1px solid #ccc',
+                    borderRadius: '6px',
+                    background: 'white'
+                  }}
+                />
+                {form.poster && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <img 
+                      src={form.poster} 
+                      alt="Poster preview" 
+                      style={{
+                        maxWidth: '200px',
+                        height: 'auto',
+                        borderRadius: '6px',
+                        border: '2px solid #e5e7eb'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <button 
+                type="submit"
+                style={{
+                  background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #059669 100%)',
                   color: 'white',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '12px',
-                  fontSize: '0.75rem',
+                  border: 'none',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
                   fontWeight: '600',
-                  textTransform: 'capitalize'
-                }}>
-                  {tournament.status}
-                </span>
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {editingId ? "Update Tournament" : "Add Tournament"}
+              </button>
+              <button 
+                type="button" 
+                onClick={handleCancelEdit}
+                style={{
+                  background: '#f3f4f6',
+                  color: '#666',
+                  border: 'none',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Cancel
+              </button>
+            </form>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {tournaments.map((t) => (
+              <div key={t.id} style={{
+                background: 'linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
+                borderRadius: '20px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                padding: '2rem',
+                border: '1px solid rgba(16, 185, 129, 0.15)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  content: '',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #059669, #16a34a, #22c55e)'
+                }} />
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <h2 style={{
+                      fontSize: '1.8rem',
+                      fontWeight: '700',
+                      color: '#059669',
+                      marginBottom: '1rem',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}>{t.name}</h2>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '1rem',
+                      margin: '1.5rem 0',
+                      padding: '1.5rem',
+                      background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(236, 253, 245, 0.6))',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.1)'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>📅 Date:</strong> {t.date}</p>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>🕐 Time:</strong> {t.time}</p>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>📍 Location:</strong> {t.location}</p>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>🏌️ Format:</strong> {t.format}</p>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>👥 Max Participants:</strong> {t.maxParticipants}</p>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>💰 Entry Fee:</strong> {t.entryFee}</p>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        color: '#1f2937',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                      }}><strong>🏆 Prize Pool:</strong> {t.prizePool}</p>
+                    </div>
+                    <p style={{
+                      fontStyle: 'italic',
+                      color: '#4b5563',
+                      margin: '1.5rem 0',
+                      padding: '1.25rem',
+                      background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.9), rgba(243, 244, 246, 0.7))',
+                      borderRadius: '12px',
+                      borderLeft: '4px solid #10b981',
+                      fontSize: '1.05rem',
+                      lineHeight: '1.6'
+                    }}>{t.description}</p>
+                    <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                      <button 
+                        style={{
+                          padding: '0.75rem 1.5rem',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)',
+                          color: 'white',
+                          boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
+                        }}
+                        onClick={() => handleEditTournament(t)}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        style={{
+                          padding: '0.75rem 1.5rem',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          background: 'linear-gradient(135deg, #ef4444 0%, #f87171 50%, #dc2626 100%)',
+                          color: 'white',
+                          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+                        }}
+                        onClick={() => handleDeleteTournament(t.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  {t.poster && (
+                    <div style={{ flexShrink: 0, width: '150px' }}>
+                      <img 
+                        src={t.poster} 
+                        alt={`${t.name} poster`} 
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{ marginBottom: '1rem', color: '#666', lineHeight: 1.6 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: '500' }}>Date:</span>
-                  <span>{tournament.date}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: '500' }}>Time:</span>
-                  <span>{tournament.time}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: '500' }}>Format:</span>
-                  <span>{tournament.format}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: '500' }}>Participants:</span>
-                  <span>{tournament.participants}/{tournament.maxParticipants}</span>
-                </div>
-              </div>
-              <p style={{
-                fontSize: '0.9rem',
-                color: '#666',
-                marginBottom: '1.5rem',
-                lineHeight: 1.5
-              }}>
-                {tournament.description}
-              </p>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={() => handleEdit(tournament)}
-                  style={{
-                    flex: 1,
-                    background: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(tournament.id)}
-                  style={{
-                    flex: 1,
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer style={{
-        background: 'linear-gradient(135deg, #0f7a04 0%, #13a905ff 50%, #16a34a 100%)',
-        position: 'relative',
-        zIndex: 10,
-        marginTop: '9rem',
-        padding: '4rem 0 2rem',
-        color: 'white'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 2rem',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '3rem'
-        }}>
-          <div>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              marginBottom: '1rem',
-              color: 'white'
-            }}>
-              GolfTee Admin
-            </h3>
-            <p style={{
-              color: 'rgba(255,255,255,0.9)',
-              lineHeight: '1.6',
-              marginBottom: '1.5rem'
-            }}>
-              Professional golf course management system for clubs and organizations.
-            </p>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <a href="#" style={{
-                width: '40px',
-                height: '40px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                textDecoration: 'none',
-                transition: 'background 0.3s'
-              }}>📧</a>
-              <a href="#" style={{
-                width: '40px',
-                height: '40px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                textDecoration: 'none',
-                transition: 'background 0.3s'
-              }}>📱</a>
-            </div>
-          </div>
-
-          <div>
-            <h4 style={{
-              fontSize: '1.2rem',
-              fontWeight: '600',
-              marginBottom: '1rem',
-              color: 'white'
-            }}>
-              Quick Links
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <Link href="/home" style={{
-                color: 'rgba(255,255,255,0.9)',
-                textDecoration: 'none',
-                transition: 'color 0.3s'
-              }}>
-                Home
-              </Link>
-              <Link href="/bookings" style={{
-                color: 'rgba(255,255,255,0.9)',
-                textDecoration: 'none',
-                transition: 'color 0.3s'
-              }}>
-                Bookings
-              </Link>
-              <Link href="/analytics" style={{
-                color: 'rgba(255,255,255,0.9)',
-                textDecoration: 'none',
-                transition: 'color 0.3s'
-              }}>
-                Analytics
-              </Link>
-              <Link href="/support" style={{
-                color: 'rgba(255,255,255,0.9)',
-                textDecoration: 'none',
-                transition: 'color 0.3s'
-              }}>
-                Support & Help Center
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <h4 style={{
-              fontSize: '1.2rem',
-              fontWeight: '600',
-              marginBottom: '1rem',
-              color: 'white'
-            }}>
-              Contact Info
-            </h4>
-            <div style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.6' }}>
-              <p style={{ margin: '0.5rem 0' }}>📍 Royal Colombo Golf Course</p>
-              <p style={{ margin: '0.5rem 0' }}>📧 royalgolf@gmail.com</p>
-              <p style={{ margin: '0.5rem 0' }}>📞 0775698201</p>
-            </div>
+            ))}
           </div>
         </div>
 
-        <div style={{
-          borderTop: '1px solid rgba(255,255,255,0.2)',
-          marginTop: '3rem',
-          paddingTop: '2rem',
-          textAlign: 'center',
-          color: 'rgba(255,255,255,0.8)'
-        }}>
-          <p>&copy; 2025 GolfTee Admin Portal. All rights reserved.</p>
-        </div>
-      </footer>
+
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .events-container {
+            max-width: 90% !important;
+            padding: 2rem !important;
+            margin: 1rem auto !important;
+          }
+          
+          .tournament-details {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
+          }
+          
+          .tournament-content {
+            flex-direction: column !important;
+            gap: 1rem !important;
+          }
+          
+          .tournament-poster {
+            width: 100% !important;
+            max-width: 200px !important;
+            margin: 0 auto !important;
+          }
+          
+          .navigation {
+            padding: 1.5rem 2rem !important;
+          }
+          
+          .nav-links {
+            gap: 2rem !important;
+          }
+          
+          .footer-content {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 2rem !important;
+            padding: 2rem !important;
+          }
+          
+          .footer-about {
+            grid-column: span 2 !important;
+            max-width: 100% !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .navigation {
+            padding: 1rem !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+          }
+          
+          .nav-links {
+            flex-wrap: wrap !important;
+            gap: 1rem !important;
+            justify-content: center !important;
+          }
+          
+          .nav-link {
+            font-size: 1rem !important;
+            padding: 0.25rem 0.5rem !important;
+          }
+          
+          .profile-section {
+            margin-top: 1rem !important;
+          }
+          
+          .events-container {
+            margin: 1rem !important;
+            padding: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .page-title {
+            font-size: 2rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          
+          .create-btn {
+            padding: 0.75rem 2rem !important;
+            font-size: 1rem !important;
+            margin-bottom: 2rem !important;
+          }
+          
+          .tournament-form {
+            padding: 1rem !important;
+            gap: 0.75rem !important;
+          }
+          
+          .tournament-form input,
+          .tournament-form textarea {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+          }
+          
+          .tournament-card {
+            padding: 1.5rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .tournament-name {
+            font-size: 1.5rem !important;
+          }
+          
+          .tournament-details {
+            padding: 1rem !important;
+            gap: 0.5rem !important;
+          }
+          
+          .tournament-details p {
+            font-size: 0.85rem !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+          
+          .tournament-actions {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+          }
+          
+          .action-btn {
+            padding: 0.6rem 1rem !important;
+            font-size: 0.9rem !important;
+            width: 100% !important;
+          }
+          
+          .notification-card {
+            width: 90vw !important;
+            left: 5vw !important;
+            transform: none !important;
+          }
+          
+          .profile-card {
+            width: 90vw !important;
+            right: 5vw !important;
+          }
+          
+          .footer-content {
+            grid-template-columns: 1fr !important;
+            text-align: center !important;
+            padding: 1.5rem !important;
+            gap: 2rem !important;
+          }
+          
+          .footer-about {
+            grid-column: span 1 !important;
+          }
+          
+          .footer-brand {
+            font-size: 1.3rem !important;
+          }
+          
+          .social-icons {
+            justify-content: center !important;
+            gap: 1rem !important;
+          }
+          
+          .footer-bottom {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            text-align: center !important;
+            padding: 1.5rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .bg-circle-left,
+          .bg-circle-right {
+            display: none !important;
+          }
+          
+          .navigation {
+            padding: 0.75rem !important;
+          }
+          
+          .nav-links {
+            font-size: 0.85rem !important;
+          }
+          
+          .events-container {
+            margin: 0.5rem !important;
+            padding: 1rem !important;
+          }
+          
+          .page-title {
+            font-size: 1.75rem !important;
+          }
+          
+          .tournament-card {
+            padding: 1rem !important;
+          }
+          
+          .tournament-details {
+            padding: 0.75rem !important;
+          }
+          
+          .footer-content {
+            padding: 1rem !important;
+          }
+          
+          .social-icons {
+            gap: 0.75rem !important;
+          }
+          
+          .social-icon {
+            width: 35px !important;
+            height: 35px !important;
+          }
+        }}
+      `}</style>
     </div>
+    
+    <Footer />
+    </>
   );
 }

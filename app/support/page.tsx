@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Navigation from "../../components/Navigation";
+import Footer from "../../components/Footer";
 
 export default function SupportPage() {
   const [feedback, setFeedback] = useState("");
@@ -30,10 +31,17 @@ export default function SupportPage() {
   ];
 
   return (
-    <div className="support-container">
-      <Navigation currentPage="support" />
+    <div className="support-page">
       <title>Support & Help Center</title>
-      <div className="page-header">
+      
+      {/* Background Circles */}
+      <div className="bg-circle-left" />
+      <div className="bg-circle-right" />
+      
+      <Navigation currentPage="support" />
+      
+      <div className="support-container">
+        <div className="page-header">
         <h1 className="page-title">Support & Help Center</h1>
         <p className="page-description">Find answers to common questions, contact support, or send us your feedback.</p>
       </div>
@@ -85,9 +93,45 @@ export default function SupportPage() {
           </form>
         )}
       </section>
+      </div>
+
+      <Footer />
 
       <style jsx>{`
+        .support-page {
+          min-height: 100vh;
+          background: #f0f0f0;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .bg-circle-left {
+          position: absolute;
+          left: -300px;
+          top: -250px;
+          width: 800px;
+          height: 800px;
+          background: #b8e6c1;
+          border-radius: 50%;
+          opacity: 1;
+          z-index: 1;
+        }
+
+        .bg-circle-right {
+          position: absolute;
+          right: -200px;
+          bottom: 150px;
+          width: 800px;
+          height: 800px;
+          background: #b8e6c1;
+          border-radius: 50%;
+          opacity: 1;
+          z-index: 1;
+        }
+        
         .support-container {
+          position: relative;
+          z-index: 10;
           max-width: 800px;
           margin: 0 auto;
           padding: 2rem 1rem 4rem 1rem;

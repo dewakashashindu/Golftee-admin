@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
+import Footer from "../../components/Footer";
 
 interface Equipment {
   id: string;
@@ -347,6 +348,8 @@ export default function EquipmentPage() {
           )}
         </div>
       </div>
+
+      <Footer />
 
       <style jsx>{`
         .equipment-container {

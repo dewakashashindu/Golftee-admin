@@ -35,7 +35,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="login-container">
+    <div className="signup-container">
       {/* Background Circles */}
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />

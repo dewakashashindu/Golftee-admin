@@ -88,7 +88,7 @@ export default function EditInformation() {
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />
       
-      <Navigation />
+      <Navigation currentPage="edit-information" />
 
       {/* Main Content */}
       <div className="main-content">
@@ -194,7 +194,6 @@ export default function EditInformation() {
       </div>
 
       <Footer />
-
       <style jsx>{`
         .edit-information-container {
           min-height: 100vh;
