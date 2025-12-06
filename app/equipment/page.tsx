@@ -453,7 +453,7 @@ export default function EquipmentPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1000;
+          z-index: 99999;
           padding: 1rem;
         }
 
@@ -465,6 +465,8 @@ export default function EquipmentPage() {
           max-height: 90vh;
           overflow-y: auto;
           box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+          position: relative;
+          z-index: 100000;
         }
 
         .form-header {
