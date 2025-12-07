@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
+const moment = require('moment-timezone');
 const { sendCancellationEmail } = require('./utils/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret';
@@ -317,9 +318,12 @@ app.post('/api/bookings', verifyToken, validate(bookingSchema), async (req, res)
   const { name, date, members, user_id } = req.body;
   if (!name || !date) return res.status(400).json({ error: 'name and date required' });
 
+  // Convert current time to Sri Lanka timezone
+  const sriLankaTime = moment().tz("Asia/Colombo").toISOString();
+
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('bookings').insert([{ name, date, members: members || [], user_id }]).select().single();
+      const { data, error } = await supabase.from('bookings').insert([{ name, date, members: members || [], user_id, created_at: sriLankaTime }]).select().single();
       if (error) return res.status(500).json({ error: error.message });
       await supabase.from('notifications').insert([{ type: 'booking', text: `New booking: ${name}` }]);
       return res.status(201).json({ booking: data });
@@ -344,9 +348,9 @@ app.post('/api/bookings', verifyToken, validate(bookingSchema), async (req, res)
     }
   }
 
-  const b = { id: makeId('b_'), name, date, members: members || [], status: 'confirmed', createdAt: new Date().toISOString() };
+  const b = { id: makeId('b_'), name, date, members: members || [], status: 'confirmed', createdAt: sriLankaTime };
   bookings.push(b);
-  notifications.push({ id: makeId('n_'), type: 'booking', text: `New booking: ${name}`, createdAt: new Date().toISOString() });
+  notifications.push({ id: makeId('n_'), type: 'booking', text: `New booking: ${name}`, createdAt: sriLankaTime });
   res.status(201).json({ booking: b });
 });
 
@@ -610,9 +614,17 @@ app.post('/api/admin/bookings', validate(adminBookingSchema), async (req, res) =
   // Admin-only direct insert: accepts a `row` object with exact columns for your bookings table.
   const { row } = req.body || {};
   if (!row || typeof row !== 'object') return res.status(400).json({ error: 'provide a `row` object with booking columns' });
+  
+  // Add Sri Lanka time if created_at not provided
+  const sriLankaTime = moment().tz("Asia/Colombo").toISOString();
+  const bookingRow = {
+    ...row,
+    created_at: row.created_at || sriLankaTime
+  };
+  
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('bookings').insert([row]).select().single();
+      const { data, error } = await supabase.from('bookings').insert([bookingRow]).select().single();
       if (error) return res.status(500).json({ error: error.message });
       return res.status(201).json({ booking: data });
     } catch (err) {
