@@ -4,19 +4,6 @@ import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
 
-// Convert UTC time to Sri Lanka Time (Asia/Colombo)
-function toSriLankaTime(dateString: string) {
-  return new Date(dateString).toLocaleString("en-LK", {
-    timeZone: "Asia/Colombo",
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true
-  });
-}
-
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,7 +241,7 @@ export default function BookingsPage() {
                           {booking.bookingStatus}
                         </span>
                       </td>
-                      <td>{toSriLankaTime(booking.createdAt)}</td>
+                      <td>{new Date(booking.createdAt).toLocaleString()}</td>
                       <td>
                         <button
                           onClick={() => handleCancelBooking(booking.id)}
