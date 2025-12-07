@@ -14,7 +14,33 @@ export default function BookingsPage() {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
 
-  // Debug: confirm API URL coming from env
+  // Handle cancel booking
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      const response = await fetch(`${apiUrl}/bookings/${bookingId}/cancel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        // Update local state to show cancelled status
+        setBookings(prevBookings =>
+          prevBookings.map(b =>
+            b.id === bookingId ? { ...b, bookingStatus: "CANCELLED" } : b
+          )
+        );
+        alert("Booking cancelled successfully");
+      } else {
+        alert("Failed to cancel booking");
+      }
+    } catch (err) {
+      console.error("Error cancelling booking:", err);
+      alert("Error cancelling booking");
+    }
+  };
   useEffect(() => {
     console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
   }, []);
@@ -190,6 +216,7 @@ export default function BookingsPage() {
                     <th>Payment Status</th>
                     <th>Booking Status</th>
                     <th>Created At</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -215,6 +242,15 @@ export default function BookingsPage() {
                         </span>
                       </td>
                       <td>{new Date(booking.createdAt).toLocaleString()}</td>
+                      <td>
+                        <button
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={booking.bookingStatus === "CANCELLED"}
+                          className="cancel-booking-btn"
+                        >
+                          {booking.bookingStatus === "CANCELLED" ? "Cancelled" : "Cancel"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -739,6 +775,27 @@ export default function BookingsPage() {
         .status-badge.cancelled {
           background: #fee2e2;
           color: #dc2626;
+        }
+        .cancel-booking-btn {
+          padding: 0.5rem 1rem;
+          background: #dc2626;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .cancel-booking-btn:hover:not(:disabled) {
+          background: #b91c1c;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        .cancel-booking-btn:disabled {
+          background: #ef5350;
+          opacity: 0.6;
+          cursor: not-allowed;
         }
         @media (max-width: 1400px) {
           .main-content {

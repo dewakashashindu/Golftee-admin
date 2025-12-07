@@ -349,6 +349,50 @@ app.post('/api/bookings', verifyToken, validate(bookingSchema), async (req, res)
   res.status(201).json({ booking: b });
 });
 
+// Cancel a booking (mark as cancelled instead of deleting)
+app.put('/api/bookings/:id/cancel', async (req, res) => {
+  const { id } = req.params;
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ status: 'Cancelled' })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.json({ message: 'Booking cancelled', data });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (prisma) {
+    try {
+      const updated = await prisma.booking.update({
+        where: { id },
+        data: { status: 'cancelled' },
+      });
+      return res.json({ message: 'Booking cancelled', data: updated });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  const bookingIndex = bookings.findIndex(b => b.id === id);
+  if (bookingIndex === -1) {
+    return res.status(404).json({ error: 'Booking not found' });
+  }
+
+  bookings[bookingIndex].status = 'cancelled';
+  res.json({ message: 'Booking cancelled', data: bookings[bookingIndex] });
+});
+
 // Events
 app.get('/api/events', async (req, res) => {
   if (supabase) {
