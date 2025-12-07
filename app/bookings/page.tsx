@@ -41,7 +41,27 @@ export default function BookingsPage() {
         console.log("Fetched bookings data:", data);
         const list = Array.isArray(data) ? data : data?.bookings || [];
         console.log("Parsed bookings list:", list);
-        setBookings(list);
+        
+        // Helper to treat empty strings as missing
+        const getValid = (val: any) => val && val !== "" ? val : null;
+        
+        // Normalize field names to handle backend inconsistencies
+        const normalized = list.map((b: any) => ({
+          ...b,
+          fullName: getValid(b.fullName) || getValid(b.customer_name) || getValid(b.name) || getValid(b.customer?.name) || getValid(b.user?.name) || "N/A",
+          phoneNo: getValid(b.phoneNo) || getValid(b.phone) || getValid(b.phone_number) || getValid(b.customer?.phone) || getValid(b.user?.phone) || "N/A",
+          courseName: getValid(b.courseName) || getValid(b.court_name) || getValid(b.course) || getValid(b.course_name) || "N/A",
+          startTime: getValid(b.startTime) || getValid(b.start_time) || getValid(b.time) || "N/A",
+          endTime: getValid(b.endTime) || getValid(b.end_time) || "N/A",
+          noPlayers: b.noPlayers || b.players_count || b.players || 0,
+          nonPlayers: b.nonPlayers || b.non_players_count || b.non_players || 0,
+          paymentStatus: getValid(b.paymentStatus) || getValid(b.payment_status) || "UNPAID",
+          bookingStatus: getValid(b.bookingStatus) || getValid(b.status) || "PENDING",
+          createdAt: getValid(b.createdAt) || getValid(b.created_at) || new Date().toISOString(),
+        }));
+        
+        console.log("Normalized bookings:", normalized);
+        setBookings(normalized);
       })
       .catch((err) => {
         console.error("Error fetching bookings:", err);

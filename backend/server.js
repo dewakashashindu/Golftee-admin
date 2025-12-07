@@ -183,31 +183,63 @@ app.post('/api/auth/login', validate(loginSchema), async (req, res) => {
 app.get('/api/bookings', async (req, res) => {
   if (supabase) {
     try {
-      // Fetch bookings with joined user data
-      const { data, error } = await supabase
+      // Fetch bookings data
+      const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select('*, users(name, email, phoneNumber)')
+        .select('*')
         .order('created_at', { ascending: false });
-      if (error) return res.status(500).json({ error: error.message });
+      
+      if (bookingsError) {
+        console.log('Supabase error:', bookingsError);
+        return res.status(500).json({ error: bookingsError.message });
+      }
+
+      // Fetch all users
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, name, email, phoneNumber');
+      
+      if (usersError) {
+        console.log('Users fetch error:', usersError);
+      }
+
+      // Create a user lookup map
+      const userMap = new Map();
+      if (users) {
+        users.forEach(user => userMap.set(user.id, user));
+      }
+
+      // Log first booking to see actual field names
+      if (bookings && bookings.length > 0) {
+        console.log('First booking from Supabase:', JSON.stringify(bookings[0], null, 2));
+        const user = userMap.get(bookings[0].user_id);
+        if (user) {
+          console.log('Matched user:', JSON.stringify(user, null, 2));
+        }
+      }
 
       // Transform Supabase data to match frontend expectations
-      const transformed = (data || []).map(booking => ({
-        id: booking.id,
-        fullName: booking.users?.name || 'N/A',
-        phoneNo: booking.users?.phoneNumber || 'N/A',
-        courseName: booking.court_name?.replace(/_/g, ' ') || 'N/A',
-        date: booking.date,
-        startTime: booking.time,
-        endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
-        noPlayers: booking.players_count,
-        nonPlayers: booking.non_players_count,
-        paymentStatus: booking.payment_status || 'UNPAID',
-        bookingStatus: booking.status?.toUpperCase() || 'PENDING',
-        createdAt: booking.created_at,
-      }));
+      const transformed = (bookings || []).map(booking => {
+        const user = userMap.get(booking.user_id);
+        return {
+          id: booking.id,
+          fullName: user?.name || 'N/A',
+          phoneNo: user?.phoneNumber || 'N/A',
+          courseName: booking.court_name?.replace(/_/g, ' ') || 'N/A',
+          date: booking.date,
+          startTime: booking.time,
+          endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
+          noPlayers: booking.players_count || 0,
+          nonPlayers: booking.non_players_count || 0,
+          paymentStatus: booking.payment_status || 'UNPAID',
+          bookingStatus: booking.status?.toUpperCase() || 'PENDING',
+          createdAt: booking.created_at,
+        };
+      });
       
       return res.json({ bookings: transformed });
     } catch (err) {
+      console.error('Bookings error:', err);
       return res.status(500).json({ error: err.message });
     }
   }
