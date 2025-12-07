@@ -183,27 +183,42 @@ app.post('/api/auth/login', validate(loginSchema), async (req, res) => {
 app.get('/api/bookings', async (req, res) => {
   if (supabase) {
     try {
-      // Fetch bookings - user data might not be in this table
-      const { data, error } = await supabase
+      // Fetch bookings first
+      const { data: bookingsData, error } = await supabase
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
-        
       if (error) return res.status(500).json({ error: error.message });
-      
+
+      // Fetch related users in a second query to avoid join failures when FK names differ
+      const userIds = [...new Set((bookingsData || []).map(b => b.user_id).filter(Boolean))];
+      let usersMap = new Map();
+      if (userIds.length) {
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, full_name, email, phone_no')
+          .in('id', userIds);
+        if (!usersError && usersData) {
+          usersMap = new Map(usersData.map(u => [u.id, u]));
+        }
+      }
+
       // Transform Supabase data to match frontend expectations
-      const transformedData = data.map(booking => ({
-        id: booking.id,
-        fullName: booking.court_name?.replace(/_/g, ' ') || 'Booking #' + booking.id.slice(0, 8),
-        date: booking.date,
-        startTime: booking.time || 'N/A',
-        endTime: calculateEndTime(booking.time, booking.duration_minutes) || 'N/A',
-        noPlayers: booking.players_count || 0,
-        nonPlayers: booking.non_players_count || 0,
-        email: 'Available in user profile',
-        phoneNo: 'Available in user profile',
-        status: (booking.status || 'Pending').charAt(0).toUpperCase() + (booking.status || 'Pending').slice(1).toLowerCase(),
-      }));
+      const transformedData = (bookingsData || []).map(booking => {
+        const user = usersMap.get(booking.user_id) || {};
+        return {
+          id: booking.id,
+          fullName: user.full_name || booking.court_name?.replace(/_/g, ' ') || booking.full_name || 'Booking',
+          date: booking.date,
+          startTime: booking.time || 'N/A',
+          endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes) || 'N/A',
+          noPlayers: booking.players_count ?? booking.no_players ?? 0,
+          nonPlayers: booking.non_players_count ?? booking.non_players ?? 0,
+          email: user.email || booking.email || 'N/A',
+          phoneNo: user.phone_no || booking.phone_no || 'N/A',
+          status: (booking.status || 'Pending').toUpperCase(),
+        };
+      });
       
       return res.json({ bookings: transformedData });
     } catch (err) {
@@ -221,15 +236,18 @@ app.get('/api/bookings', async (req, res) => {
   return res.json({ bookings });
 });
 
-// Helper function to calculate end time
-function calculateEndTime(startTime, durationMinutes) {
+// Helper function to calculate end time; returns HH:MM formatted string
+function calculateEndTime(dateStr, startTime, durationMinutes) {
   if (!startTime || !durationMinutes) return null;
   try {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes + durationMinutes;
-    const endHours = Math.floor(totalMinutes / 60) % 24;
-    const endMinutes = totalMinutes % 60;
-    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+    const baseDate = dateStr ? `${dateStr}T${startTime}` : `1970-01-01T${startTime}`;
+    const start = new Date(baseDate);
+    if (Number.isFinite(durationMinutes)) {
+      start.setMinutes(start.getMinutes() + Number(durationMinutes));
+    }
+    const hh = String(start.getHours()).padStart(2, '0');
+    const mm = String(start.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
   } catch (e) {
     return null;
   }
