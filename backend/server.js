@@ -193,15 +193,17 @@ app.get('/api/bookings', async (req, res) => {
       // Transform Supabase data to match frontend expectations
       const transformed = (data || []).map(booking => ({
         id: booking.id,
-        noPlayers: booking.players_count,
-        nonPlayers: booking.non_players_count,
+        fullName: booking.users?.name || 'N/A',
+        phoneNo: booking.users?.phoneNumber || 'N/A',
+        courseName: booking.court_name?.replace(/_/g, ' ') || 'N/A',
+        date: booking.date,
         startTime: booking.time,
         endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
-        fullName: booking.users?.name || booking.court_name?.replace(/_/g, ' ') || 'N/A',
-        email: booking.users?.email || 'N/A',
-        phoneNo: booking.users?.phoneNumber || 'N/A',
-        date: booking.date,
-        status: booking.status?.toUpperCase() || 'PENDING',
+        noPlayers: booking.players_count,
+        nonPlayers: booking.non_players_count,
+        paymentStatus: booking.payment_status || 'UNPAID',
+        bookingStatus: booking.status?.toUpperCase() || 'PENDING',
+        createdAt: booking.created_at,
       }));
       
       return res.json({ bookings: transformed });

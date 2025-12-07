@@ -158,33 +158,43 @@ export default function BookingsPage() {
               <table className="bookings-table">
                 <thead>
                   <tr className="table-header">
-                    <th>Full Name</th>
+                    <th>Booking ID</th>
+                    <th>Customer Name</th>
+                    <th>Phone Number</th>
+                    <th>Course Name</th>
                     <th>Date</th>
                     <th>Start Time</th>
                     <th>End Time</th>
-                    <th>No. Players</th>
+                    <th>Players</th>
                     <th>Non Players</th>
-                    <th>Email</th>
-                    <th>Phone No</th>
-                    <th>Status</th>
+                    <th>Payment Status</th>
+                    <th>Booking Status</th>
+                    <th>Created At</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredBookings.map((booking: any) => (
                     <tr key={booking.id} className="table-row">
+                      <td>{booking.id}</td>
                       <td>{booking.fullName}</td>
+                      <td>{booking.phoneNo}</td>
+                      <td>{booking.courseName}</td>
                       <td>{booking.date}</td>
                       <td>{booking.startTime}</td>
                       <td>{booking.endTime}</td>
                       <td>{booking.noPlayers}</td>
                       <td>{booking.nonPlayers}</td>
-                      <td>{booking.email}</td>
-                      <td>{booking.phoneNo}</td>
                       <td>
-                        <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>
-                          {booking.status}
+                        <span className={`status-badge ${booking.paymentStatus?.toLowerCase?.()}`}>
+                          {booking.paymentStatus}
                         </span>
                       </td>
+                      <td>
+                        <span className={`status-badge ${booking.bookingStatus?.toLowerCase?.()}`}>
+                          {booking.bookingStatus}
+                        </span>
+                      </td>
+                      <td>{new Date(booking.createdAt).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -195,9 +205,21 @@ export default function BookingsPage() {
                   <div key={booking.id} className="booking-card">
                     <div className="booking-card-header">
                       <div className="booking-card-name">{booking.fullName}</div>
-                      <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>{booking.status}</span>
+                      <span className={`status-badge ${booking.bookingStatus?.toLowerCase?.()}`}>{booking.bookingStatus}</span>
                     </div>
                     <div className="booking-card-details">
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Booking ID</span>
+                        <span className="booking-detail-value">{booking.id}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Phone</span>
+                        <span className="booking-detail-value">{booking.phoneNo}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Course</span>
+                        <span className="booking-detail-value">{booking.courseName}</span>
+                      </div>
                       <div className="booking-detail">
                         <span className="booking-detail-label">Date</span>
                         <span className="booking-detail-value">{booking.date}</span>
@@ -215,12 +237,8 @@ export default function BookingsPage() {
                         <span className="booking-detail-value">{booking.nonPlayers}</span>
                       </div>
                       <div className="booking-detail">
-                        <span className="booking-detail-label">Email</span>
-                        <span className="booking-detail-value">{booking.email}</span>
-                      </div>
-                      <div className="booking-detail">
-                        <span className="booking-detail-label">Phone</span>
-                        <span className="booking-detail-value">{booking.phoneNo}</span>
+                        <span className="booking-detail-label">Payment</span>
+                        <span className="booking-detail-value">{booking.paymentStatus}</span>
                       </div>
                     </div>
                   </div>
