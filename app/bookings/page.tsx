@@ -14,18 +14,37 @@ export default function BookingsPage() {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
 
+  // Debug: confirm API URL coming from env
+  useEffect(() => {
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch("/api/bookings")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    if (!apiUrl) {
+      setError("NEXT_PUBLIC_API_URL is not set");
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    fetch(`${apiUrl}/bookings`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        if (mounted) setBookings(Array.isArray(data) ? data : []);
+        if (!mounted) return;
+        console.log("Fetched bookings data:", data);
+        const list = Array.isArray(data) ? data : data?.bookings || [];
+        console.log("Parsed bookings list:", list);
+        setBookings(list);
       })
       .catch((err) => {
+        console.error("Error fetching bookings:", err);
         if (mounted) setError(String(err));
       })
       .finally(() => {
@@ -48,16 +67,31 @@ export default function BookingsPage() {
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     return bookings.filter((booking: any) => {
-      const bookingDate = new Date(booking.date);
+      let bookingDate = new Date(booking.date);
+      bookingDate.setHours(0, 0, 0, 0);
+      const todayDate = new Date(today);
+      todayDate.setHours(0, 0, 0, 0);
+      
       switch (filterType) {
         case "today":
-          return booking.date === today.toISOString().split("T")[0];
+          return bookingDate.getTime() === todayDate.getTime();
         case "week":
-          return bookingDate >= startOfWeek && bookingDate <= endOfWeek;
+          const weekStart = new Date(startOfWeek);
+          const weekEnd = new Date(endOfWeek);
+          weekStart.setHours(0, 0, 0, 0);
+          weekEnd.setHours(23, 59, 59, 999);
+          return bookingDate >= weekStart && bookingDate <= weekEnd;
         case "month":
-          return bookingDate >= startOfMonth && bookingDate <= endOfMonth;
+          const monthStart = new Date(startOfMonth);
+          const monthEnd = new Date(endOfMonth);
+          monthStart.setHours(0, 0, 0, 0);
+          monthEnd.setHours(23, 59, 59, 999);
+          return bookingDate >= monthStart && bookingDate <= monthEnd;
         case "custom":
-          return customDate ? booking.date === customDate : true;
+          if (!customDate) return true;
+          const customDateObj = new Date(customDate);
+          customDateObj.setHours(0, 0, 0, 0);
+          return bookingDate.getTime() === customDateObj.getTime();
         default:
           return true;
       }

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
+import fetchAdminBookings from "../../lib/api";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -59,6 +60,9 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('week');
   const [revenueTimeRange, setRevenueTimeRange] = useState('week');
   const [totalRevenue, setTotalRevenue] = useState(6840); // Initialize with default week total
+  const [adminBookings, setAdminBookings] = useState<any[]>([]);
+  const [adminBookingsLoading, setAdminBookingsLoading] = useState(false);
+  const [adminBookingsError, setAdminBookingsError] = useState<string | null>(null);
 
   const generateRandomData = (length: number) => {
     return Array.from({ length }, () => Math.floor(Math.random() * 40) + 5);
@@ -180,6 +184,26 @@ export default function AnalyticsPage() {
       },
     },
   };
+  // Fetch admin bookings on mount (uses optional token from localStorage)
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      setAdminBookingsLoading(true);
+      setAdminBookingsError(null);
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') || undefined : undefined;
+        const data = await fetchAdminBookings(token as string | undefined);
+        const list = data?.bookings || data || [];
+        if (mounted) setAdminBookings(Array.isArray(list) ? list : []);
+      } catch (err: any) {
+        if (mounted) setAdminBookingsError(err?.message || String(err));
+      } finally {
+        if (mounted) setAdminBookingsLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
   return (
     <div className="analytics-container">
       {/* Background Circles */}
@@ -206,6 +230,10 @@ export default function AnalyticsPage() {
           <div className="stat-value">$4500</div>
           <div className="stat-label">Total Revenue<br />of This Week</div>
         </div>
+          <div className="stat-card stat-cyan">
+            <div className="stat-value">{adminBookingsLoading ? '...' : adminBookings.length}</div>
+            <div className="stat-label">Admin Bookings<br />(fetched)</div>
+          </div>
       </div>
       {/* Bookings History Chart */}
       <div className="chart-container">
@@ -232,13 +260,13 @@ export default function AnalyticsPage() {
             </button>
             <input
               type="date"
-              className="time-btn"
+              className="time-btn date-input"
               value={customDate}
               onChange={e => {
                 setCustomDate(e.target.value);
                 updateChartData('custom');
               }}
-              style={{ minWidth: '140px', padding: '0.5rem 1rem', fontSize: '0.9rem', border: '2px solid #d1d5db', borderRadius: '6px', fontWeight: 500, color: '#374151', background: 'white', cursor: 'pointer' }}
+              title="Select a custom date for bookings"
             />
           </div>
         </div>
@@ -285,13 +313,13 @@ export default function AnalyticsPage() {
             </button>
             <input
               type="date"
-              className="time-btn"
+              className="time-btn date-input"
               value={customRevenueDate}
               onChange={e => {
                 setCustomRevenueDate(e.target.value);
                 updateRevenueChartData('custom');
               }}
-              style={{ minWidth: '140px', padding: '0.5rem 1rem', fontSize: '0.9rem', border: '2px solid #d1d5db', borderRadius: '6px', fontWeight: 500, color: '#374151', background: 'white', cursor: 'pointer' }}
+              title="Select a custom date for revenue"
             />
           </div>
         </div>
@@ -321,38 +349,38 @@ export default function AnalyticsPage() {
           <div className="rating-breakdown">
             <h3>Rating Breakdown</h3>
             <div className="rating-bars">
-              <div className="rating-bar">
-                <span className="rating-label">5 stars</span>
-                <div className="bar-container">
-                  <div className="bar-fill" style={{ width: '65%', backgroundColor: '#22c55e' }}></div>
-                </div>
-                <span className="rating-percentage">65%</span>
-              </div>
+                  <div className="rating-bar">
+                    <span className="rating-label">5 stars</span>
+                    <div className="bar-container">
+                      <div className="bar-fill bar-fill-5stars"></div>
+                    </div>
+                    <span className="rating-percentage">65%</span>
+                  </div>
               <div className="rating-bar">
                 <span className="rating-label">4 stars</span>
                 <div className="bar-container">
-                  <div className="bar-fill" style={{ width: '20%', backgroundColor: '#84cc16' }}></div>
+                  <div className="bar-fill bar-fill-4stars"></div>
                 </div>
                 <span className="rating-percentage">20%</span>
               </div>
               <div className="rating-bar">
                 <span className="rating-label">3 stars</span>
                 <div className="bar-container">
-                  <div className="bar-fill" style={{ width: '10%', backgroundColor: '#eab308' }}></div>
+                  <div className="bar-fill bar-fill-3stars"></div>
                 </div>
                 <span className="rating-percentage">10%</span>
               </div>
               <div className="rating-bar">
                 <span className="rating-label">2 stars</span>
                 <div className="bar-container">
-                  <div className="bar-fill" style={{ width: '3%', backgroundColor: '#f97316' }}></div>
+                  <div className="bar-fill bar-fill-2stars"></div>
                 </div>
                 <span className="rating-percentage">3%</span>
               </div>
               <div className="rating-bar">
                 <span className="rating-label">1 star</span>
                 <div className="bar-container">
-                  <div className="bar-fill" style={{ width: '2%', backgroundColor: '#ef4444' }}></div>
+                  <div className="bar-fill bar-fill-1star"></div>
                 </div>
                 <span className="rating-percentage">2%</span>
               </div>
@@ -913,6 +941,9 @@ export default function AnalyticsPage() {
           cursor: pointer;
           transition: all 0.2s;
           color: #374151;
+        }
+        .date-input {
+          min-width: 140px;
         }
         .time-btn:hover {
           border-color: #16a34a;

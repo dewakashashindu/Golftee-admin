@@ -183,9 +183,29 @@ app.post('/api/auth/login', validate(loginSchema), async (req, res) => {
 app.get('/api/bookings', async (req, res) => {
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+      // Fetch bookings - user data might not be in this table
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
       if (error) return res.status(500).json({ error: error.message });
-      return res.json({ bookings: data });
+      
+      // Transform Supabase data to match frontend expectations
+      const transformedData = data.map(booking => ({
+        id: booking.id,
+        fullName: booking.court_name?.replace(/_/g, ' ') || 'Booking #' + booking.id.slice(0, 8),
+        date: booking.date,
+        startTime: booking.time || 'N/A',
+        endTime: calculateEndTime(booking.time, booking.duration_minutes) || 'N/A',
+        noPlayers: booking.players_count || 0,
+        nonPlayers: booking.non_players_count || 0,
+        email: 'Available in user profile',
+        phoneNo: 'Available in user profile',
+        status: (booking.status || 'Pending').charAt(0).toUpperCase() + (booking.status || 'Pending').slice(1).toLowerCase(),
+      }));
+      
+      return res.json({ bookings: transformedData });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -200,6 +220,20 @@ app.get('/api/bookings', async (req, res) => {
   }
   return res.json({ bookings });
 });
+
+// Helper function to calculate end time
+function calculateEndTime(startTime, durationMinutes) {
+  if (!startTime || !durationMinutes) return null;
+  try {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + durationMinutes;
+    const endHours = Math.floor(totalMinutes / 60) % 24;
+    const endMinutes = totalMinutes % 60;
+    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+  } catch (e) {
+    return null;
+  }
+}
 
 // Auth middleware - verify Bearer token using Supabase
 async function verifyToken(req, res, next) {
@@ -476,6 +510,28 @@ app.post('/api/admin/bookings', validate(adminBookingSchema), async (req, res) =
   }
 
   return res.status(404).json({ error: 'no database configured' });
+});
+
+// Admin: list all bookings (secured)
+app.get('/api/bookings/admin/all', verifyToken, async (req, res) => {
+  // Only allow if token verified (verifyToken attaches req.user)
+  try {
+    if (supabase) {
+      const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ bookings: data });
+    }
+
+    if (prisma) {
+      const data = await prisma.booking.findMany({ orderBy: { createdAt: 'desc' } });
+      return res.json({ bookings: data });
+    }
+
+    // fallback in-memory
+    return res.json({ bookings });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Fallback

@@ -14,9 +14,55 @@ async function main() {
   const alice = await prisma.user.create({ data: { username: 'alice', email: 'alice@example.com', password: 'dev-pass' } });
   const bob = await prisma.user.create({ data: { username: 'bob', email: 'bob@example.com', password: 'dev-pass' } });
 
-  // Create bookings
-  await prisma.booking.create({ data: { name: 'Zod Booking', date: '2025-12-05', members: 3, status: 'confirmed', userId: alice.id } });
-  await prisma.booking.create({ data: { name: 'Test Booking via JWT 2', date: '2025-11-27', members: 2, status: 'confirmed', userId: bob.id } });
+  // Create bookings with all frontend-required fields
+  await prisma.booking.create({ 
+    data: { 
+      name: 'John Doe',
+      fullName: 'John Doe',
+      date: '2025-12-07',
+      startTime: '09:00',
+      endTime: '11:00',
+      members: 2,
+      noPlayers: 2,
+      nonPlayers: 1,
+      email: 'john@example.com',
+      phoneNo: '+1234567890',
+      status: 'Confirmed',
+      userId: alice.id
+    } 
+  });
+  await prisma.booking.create({ 
+    data: { 
+      name: 'Jane Smith',
+      fullName: 'Jane Smith',
+      date: '2025-12-08',
+      startTime: '10:00',
+      endTime: '12:00',
+      members: 4,
+      noPlayers: 4,
+      nonPlayers: 0,
+      email: 'jane@example.com',
+      phoneNo: '+1987654321',
+      status: 'Pending',
+      userId: bob.id
+    } 
+  });
+  await prisma.booking.create({ 
+    data: { 
+      name: 'Bob Johnson',
+      fullName: 'Bob Johnson',
+      date: '2025-12-07',
+      startTime: '14:00',
+      endTime: '16:00',
+      members: 3,
+      noPlayers: 3,
+      nonPlayers: 2,
+      email: 'bob@example.com',
+      phoneNo: '+1122334455',
+      status: 'Confirmed',
+      userId: alice.id
+    } 
+  });
 
   // Create events
   await prisma.event.create({ data: { title: 'Prisma Event 1', date: '2025-12-01', description: 'Test event' } });
