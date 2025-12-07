@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
+const { sendCancellationEmail } = require('./utils/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret';
 
@@ -355,6 +356,14 @@ app.put('/api/bookings/:id/cancel', async (req, res) => {
 
   if (supabase) {
     try {
+      // Get booking and user details before updating
+      const { data: bookingData } = await supabase
+        .from('bookings')
+        .select('*, users(name, email, phoneNumber)')
+        .eq('id', id)
+        .single();
+
+      // Update booking status
       const { data, error } = await supabase
         .from('bookings')
         .update({ status: 'Cancelled' })
@@ -366,24 +375,65 @@ app.put('/api/bookings/:id/cancel', async (req, res) => {
         return res.status(500).json({ error: error.message });
       }
 
-      return res.json({ message: 'Booking cancelled', data });
+      // Send cancellation email to customer
+      if (bookingData && bookingData.users?.email) {
+        const bookingWithDetails = {
+          id: data.id,
+          fullName: bookingData.users?.name || 'Customer',
+          email: bookingData.users?.email,
+          courseName: data.court_name?.replace(/_/g, ' ') || 'N/A',
+          date: data.date,
+          startTime: data.time,
+          endTime: calculateEndTime(data.date, data.time, data.duration_minutes),
+          noPlayers: data.players_count || 0,
+        };
+        await sendCancellationEmail(bookingData.users.email, bookingWithDetails);
+      }
+
+      return res.json({ message: 'Booking cancelled and email sent', data });
     } catch (err) {
+      console.error('Bookings cancel error:', err);
       return res.status(500).json({ error: err.message });
     }
   }
 
   if (prisma) {
     try {
+      // Get booking details before updating
+      const bookingData = await prisma.booking.findUnique({
+        where: { id },
+        include: { user: true },
+      });
+
+      // Update booking status
       const updated = await prisma.booking.update({
         where: { id },
         data: { status: 'cancelled' },
       });
-      return res.json({ message: 'Booking cancelled', data: updated });
+
+      // Send cancellation email
+      if (bookingData && bookingData.user?.email) {
+        const bookingWithDetails = {
+          id: updated.id,
+          fullName: bookingData.user?.name || 'Customer',
+          email: bookingData.user?.email,
+          courseName: updated.courseName || 'N/A',
+          date: updated.date.toISOString().split('T')[0],
+          startTime: updated.startTime || 'N/A',
+          endTime: updated.endTime || 'N/A',
+          noPlayers: updated.noPlayers || 0,
+        };
+        await sendCancellationEmail(bookingData.user.email, bookingWithDetails);
+      }
+
+      return res.json({ message: 'Booking cancelled and email sent', data: updated });
     } catch (err) {
+      console.error('Prisma cancel error:', err);
       return res.status(500).json({ error: err.message });
     }
   }
 
+  // In-memory fallback
   const bookingIndex = bookings.findIndex(b => b.id === id);
   if (bookingIndex === -1) {
     return res.status(404).json({ error: 'Booking not found' });
