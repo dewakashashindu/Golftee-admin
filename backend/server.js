@@ -183,44 +183,28 @@ app.post('/api/auth/login', validate(loginSchema), async (req, res) => {
 app.get('/api/bookings', async (req, res) => {
   if (supabase) {
     try {
-      // Fetch bookings first
-      const { data: bookingsData, error } = await supabase
+      // Fetch bookings with joined user data
+      const { data, error } = await supabase
         .from('bookings')
-        .select('*')
+        .select('*, users(name, email, phoneNumber)')
         .order('created_at', { ascending: false });
       if (error) return res.status(500).json({ error: error.message });
 
-      // Fetch related users in a second query to avoid join failures when FK names differ
-      const userIds = [...new Set((bookingsData || []).map(b => b.user_id).filter(Boolean))];
-      let usersMap = new Map();
-      if (userIds.length) {
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, full_name, email, phone_no')
-          .in('id', userIds);
-        if (!usersError && usersData) {
-          usersMap = new Map(usersData.map(u => [u.id, u]));
-        }
-      }
-
       // Transform Supabase data to match frontend expectations
-      const transformedData = (bookingsData || []).map(booking => {
-        const user = usersMap.get(booking.user_id) || {};
-        return {
-          id: booking.id,
-          fullName: user.full_name || booking.court_name?.replace(/_/g, ' ') || booking.full_name || 'Booking',
-          date: booking.date,
-          startTime: booking.time || 'N/A',
-          endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes) || 'N/A',
-          noPlayers: booking.players_count ?? booking.no_players ?? 0,
-          nonPlayers: booking.non_players_count ?? booking.non_players ?? 0,
-          email: user.email || booking.email || 'N/A',
-          phoneNo: user.phone_no || booking.phone_no || 'N/A',
-          status: (booking.status || 'Pending').toUpperCase(),
-        };
-      });
+      const transformed = (data || []).map(booking => ({
+        id: booking.id,
+        noPlayers: booking.players_count,
+        nonPlayers: booking.non_players_count,
+        startTime: booking.time,
+        endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
+        fullName: booking.users?.name || booking.court_name?.replace(/_/g, ' ') || 'N/A',
+        email: booking.users?.email || 'N/A',
+        phoneNo: booking.users?.phoneNumber || 'N/A',
+        date: booking.date,
+        status: booking.status?.toUpperCase() || 'PENDING',
+      }));
       
-      return res.json({ bookings: transformedData });
+      return res.json({ bookings: transformed });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
