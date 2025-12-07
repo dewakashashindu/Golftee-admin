@@ -11,6 +11,121 @@ const createTransporter = () => {
   });
 };
 
+// Professional GolfTee email template
+const getEmailTemplate = (booking) => {
+  return `<!DOCTYPE html>
+<html lang="en" style="margin:0;padding:0;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Booking Cancelled</title>
+
+  <style>
+    /* Mobile responsive */
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 100% !important;
+        padding: 20px !important;
+      }
+    }
+  </style>
+</head>
+
+<body style="background-color:#f5f5f5;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:30px 0;">
+    <tr>
+      <td align="center">
+
+        <table class="container" width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:12px;padding:30px;">
+
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom:20px;">
+              <div style="width:70px;height:70px;background:#16a34a;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                <span style="font-size:40px;color:white;">⛳</span>
+              </div>
+              <h2 style="font-size:24px;color:#333;margin:10px 0;">GolfTee Booking Update</h2>
+            </td>
+          </tr>
+
+          <!-- Title -->
+          <tr>
+            <td>
+              <h3 style="color:#dc2626;font-size:22px;margin-top:0;">
+                Your Booking Has Been Cancelled
+              </h3>
+              <p style="font-size:16px;color:#555;line-height:1.6;">
+                Dear ${booking.fullName || 'Customer'},
+              </p>
+
+              <p style="font-size:16px;color:#555;line-height:1.6;">
+                We wanted to let you know that your booking has been <strong style="color:#dc2626;">cancelled</strong> by the GolfTee administration team.  
+                If this was unexpected or you need support, feel free to contact us anytime.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Booking Info Card -->
+          <tr>
+            <td>
+              <div style="
+                border:1px solid #ddd;
+                border-radius:10px;
+                padding:20px;
+                margin:25px 0;
+                background:#fafafa;
+              ">
+                <h3 style="margin-top:0;color:#333;">Booking Details</h3>
+                <p style="margin:5px 0;font-size:16px;"><strong>Booking ID:</strong> ${booking.id}</p>
+                <p style="margin:5px 0;font-size:16px;"><strong>Course:</strong> ${booking.courseName || 'N/A'}</p>
+                <p style="margin:5px 0;font-size:16px;"><strong>Date:</strong> ${booking.date}</p>
+                <p style="margin:5px 0;font-size:16px;"><strong>Time:</strong> ${booking.startTime || 'N/A'} – ${booking.endTime || 'N/A'}</p>
+                <p style="margin:5px 0;font-size:16px;"><strong>Players:</strong> ${booking.noPlayers || 0}</p>
+                <p style="margin:5px 0;font-size:16px;"><strong>Non-Players:</strong> ${booking.nonPlayers || 0}</p>
+                <p style="margin:5px 0;font-size:16px;"><strong>Status:</strong> 
+                  <span style="color:#dc2626;font-weight:bold;">Cancelled</span>
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td align="center">
+              <a href="https://golftee.lk/app" 
+                style="
+                  background:#16a34a;
+                  padding:12px 25px;
+                  color:#fff;
+                  text-decoration:none;
+                  font-size:16px;
+                  border-radius:6px;
+                  display:inline-block;
+                  margin-bottom:25px;
+                ">
+                Book Again
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="color:#888;font-size:14px;">
+              <p style="margin:0;">GolfTee © 2025 • All Rights Reserved</p>
+              <p style="margin:5px 0;">This is an automated message. Please do not reply.</p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+};
+
 // Send booking cancellation email to customer
 const sendCancellationEmail = async (to, booking) => {
   try {
@@ -26,66 +141,11 @@ const sendCancellationEmail = async (to, booking) => {
 
     const transporter = createTransporter();
 
-    const endTime = booking.endTime || `${parseInt(booking.time.split(':')[0]) + 1}:${booking.time.split(':')[1]}`;
-
     const mailOptions = {
-      from: '"GolfTee Bookings" <noreply@golftee.com>',
+      from: '"GolfTee Bookings" <official.golftee@gmail.com>',
       to,
       subject: 'Your GolfTee Booking Has Been Cancelled',
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="UTF-8">
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-              .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
-              .booking-details { background: white; padding: 15px; border-left: 4px solid #dc2626; margin: 15px 0; }
-              .detail-row { margin: 8px 0; }
-              .label { font-weight: bold; color: #374151; }
-              .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: center; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h2 style="margin: 0;">Booking Cancelled</h2>
-              </div>
-              <div class="content">
-                <p>Dear ${booking.fullName || 'Customer'},</p>
-                <p>We regret to inform you that your GolfTee booking has been cancelled by our admin team.</p>
-
-                <div class="booking-details">
-                  <h3 style="margin-top: 0; color: #111;">Booking Details</h3>
-                  <div class="detail-row">
-                    <span class="label">Booking ID:</span> ${booking.id}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Course:</span> ${booking.courseName || 'N/A'}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Date:</span> ${booking.date}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Time:</span> ${booking.startTime || booking.time} - ${endTime}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Players:</span> ${booking.noPlayers || booking.players_count || 0}
-                  </div>
-                </div>
-
-                <p>If you have any questions or would like to reschedule, please contact our support team.</p>
-
-                <div class="footer">
-                  <p>© 2025 GolfTee Admin Portal. All rights reserved.</p>
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>
-      `,
+      html: getEmailTemplate(booking),
     };
 
     await transporter.sendMail(mailOptions);
