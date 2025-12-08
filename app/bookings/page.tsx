@@ -1,14 +1,10 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
 
 export default function BookingsPage() {
-  const searchParams = useSearchParams();
-  const filterStatus = searchParams.get("status"); // "canceled", "confirmed", "pending"
-  
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,16 +103,6 @@ export default function BookingsPage() {
 
   const filteredBookings = useMemo(() => {
     if (!bookings) return [];
-    
-    // First filter by status if provided in URL
-    let statusFiltered = bookings;
-    if (filterStatus) {
-      statusFiltered = bookings.filter(b =>
-        b.bookingStatus?.toLowerCase() === filterStatus.toLowerCase()
-      );
-    }
-    
-    // Then apply date filters
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
@@ -126,7 +112,7 @@ export default function BookingsPage() {
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    return statusFiltered.filter((booking: any) => {
+    return bookings.filter((booking: any) => {
       let bookingDate = new Date(booking.date);
       bookingDate.setHours(0, 0, 0, 0);
       const todayDate = new Date(today);
@@ -156,7 +142,7 @@ export default function BookingsPage() {
           return true;
       }
     });
-  }, [bookings, filterType, customDate, filterStatus]);
+  }, [bookings, filterType, customDate]);
 
   return (
     <div className="bookings-container">
