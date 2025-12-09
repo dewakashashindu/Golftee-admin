@@ -664,6 +664,226 @@ app.get('/api/bookings/admin/all', verifyToken, async (req, res) => {
   }
 });
 
+// ----------------------
+// EQUIPMENT ENDPOINTS
+// ----------------------
+
+/**
+ * GET /api/equipment
+ * List all equipment (supports optional filters)
+ */
+app.get("/api/equipment", async (req, res) => {
+  try {
+    const { type, condition, search } = req.query;
+
+    if (supabase) {
+      let query = supabase.from("equipment").select("*");
+
+      if (type) query = query.eq("type", type);
+      if (condition) query = query.eq("condition", condition);
+      if (search) {
+        query = query.ilike("name", `%${search}%`);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return res.json({ success: true, data: data || [] });
+    }
+
+    if (prisma) {
+      // Prisma fallback (if you add equipment model to schema)
+      const equipment = await prisma.equipment.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+      return res.json({ success: true, data: equipment });
+    }
+
+    // In-memory fallback
+    return res.json({ success: true, data: [] });
+  } catch (err) {
+    console.error('Equipment GET error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * POST /api/equipment
+ * Add new equipment
+ */
+app.post("/api/equipment", async (req, res) => {
+  try {
+    const {
+      name,
+      type,
+      condition,
+      rentalPrice,
+      quantity,
+      description,
+      image,
+      location,
+      available
+    } = req.body;
+
+    if (!name || !type) {
+      return res.status(400).json({ success: false, error: 'name and type are required' });
+    }
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("equipment")
+        .insert([{
+          name,
+          type,
+          condition: condition || 'good',
+          rental_price: rentalPrice || '0',
+          quantity: quantity || 1,
+          description: description || '',
+          image: image || null,
+          location: location || null,
+          available: available !== false,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, ...data });
+    }
+
+    if (prisma) {
+      const created = await prisma.equipment.create({
+        data: {
+          name,
+          type,
+          condition: condition || 'good',
+          rentalPrice: rentalPrice || '0',
+          quantity: quantity || 1,
+          description: description || '',
+        }
+      });
+      return res.json({ success: true, ...created });
+    }
+
+    // In-memory fallback
+    const newEquip = {
+      id: makeId('eq_'),
+      name,
+      type,
+      condition: condition || 'good',
+      rentalPrice: rentalPrice || '0',
+      quantity: quantity || 1,
+      description: description || '',
+      addedDate: new Date().toISOString().split('T')[0]
+    };
+    return res.json({ success: true, ...newEquip });
+  } catch (err) {
+    console.error('Equipment POST error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * PUT /api/equipment/:id
+ * Update equipment
+ */
+app.put("/api/equipment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      name,
+      type,
+      condition,
+      rentalPrice,
+      quantity,
+      description,
+      image,
+      location,
+      available,
+    } = req.body;
+
+    if (supabase) {
+      const updateData = {};
+      if (name !== undefined) updateData.name = name;
+      if (type !== undefined) updateData.type = type;
+      if (condition !== undefined) updateData.condition = condition;
+      if (rentalPrice !== undefined) updateData.rental_price = rentalPrice;
+      if (quantity !== undefined) updateData.quantity = quantity;
+      if (description !== undefined) updateData.description = description;
+      if (image !== undefined) updateData.image = image;
+      if (location !== undefined) updateData.location = location;
+      if (available !== undefined) updateData.available = available;
+
+      const { data, error } = await supabase
+        .from("equipment")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, ...data });
+    }
+
+    if (prisma) {
+      const updated = await prisma.equipment.update({
+        where: { id },
+        data: {
+          name,
+          type,
+          condition,
+          rentalPrice,
+          quantity,
+          description,
+        }
+      });
+      return res.json({ success: true, ...updated });
+    }
+
+    return res.json({ success: true, message: 'Equipment updated' });
+  } catch (err) {
+    console.error('Equipment PUT error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * DELETE /api/equipment/:id
+ * Remove equipment
+ */
+app.delete("/api/equipment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (supabase) {
+      const { error } = await supabase
+        .from("equipment")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      return res.json({ success: true, message: "Equipment deleted." });
+    }
+
+    if (prisma) {
+      await prisma.equipment.delete({ where: { id } });
+      return res.json({ success: true, message: "Equipment deleted." });
+    }
+
+    return res.json({ success: true, message: "Equipment deleted." });
+  } catch (err) {
+    console.error('Equipment DELETE error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Fallback
 app.use((req, res) => {
   res.status(404).json({ error: 'not found' });

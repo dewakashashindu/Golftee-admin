@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
@@ -7,50 +7,37 @@ import Footer from "../../components/Footer";
 interface Equipment {
   id: string;
   name: string;
-  type: 'cart' | 'clubs' | 'accessories' | 'maintenance';
+  type: "cart" | "clubs" | "accessories" | "maintenance";
   description: string;
   quantity: number;
-  condition: 'excellent' | 'good' | 'fair' | 'needs_repair';
-  rentalPrice: string;
-  addedDate: string;
+  condition: "excellent" | "good" | "fair" | "needs_repair";
+  rentalPrice: string; // e.g. "$25/day" or "25"
+  addedDate: string; // ISO date or YYYY-MM-DD
 }
 
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
+
 export default function EquipmentPage() {
+  // UI state
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
-  const [equipment, setEquipment] = useState<Equipment[]>([
-    {
-      id: '1',
-      name: 'Golf Cart Premium',
-      type: 'cart',
-      description: 'Electric golf cart with GPS and cooler',
-      quantity: 25,
-      condition: 'excellent',
-      rentalPrice: '$45/day',
-      addedDate: '2025-01-15'
-    },
-    {
-      id: '2',
-      name: 'Callaway Driver Set',
-      type: 'clubs',
-      description: 'Complete driver set for beginners',
-      quantity: 12,
-      condition: 'good',
-      rentalPrice: '$25/day',
-      addedDate: '2025-01-10'
-    },
-    {
-      id: '3',
-      name: 'Golf Umbrella Large',
-      type: 'accessories',
-      description: 'Weather protection umbrellas',
-      quantity: 30,
-      condition: 'excellent',
-      rentalPrice: '$5/day',
-      addedDate: '2025-01-20'
-    }
-  ]);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [pageSize, setPageSize] = useState(6);
+
+  // data state
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  // controls
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterCondition, setFilterCondition] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"addedDate" | "name" | "price">("addedDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [form, setForm] = useState({
     name: "",
@@ -61,35 +48,89 @@ export default function EquipmentPage() {
     rentalPrice: ""
   });
 
+  // Fetch equipment from API
+  useEffect(() => {
+    fetchEquipment();
+  }, []);
+
+  const fetchEquipment = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${BACKEND}/equipment`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Transform API data to match frontend interface
+        const transformed = result.data.map((item: any) => ({
+          id: item.id.toString(),
+          name: item.name,
+          type: item.type,
+          description: item.description || '',
+          quantity: item.quantity || 0,
+          condition: item.condition || 'good',
+          rentalPrice: item.rental_price ? `$${item.rental_price}` : '$0',
+          addedDate: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+        }));
+        setEquipment(transformed);
+        setTotal(transformed.length);
+      } else {
+        setError('Failed to load equipment');
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Failed to connect to server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingId) {
-      // Update existing equipment
-      const updatedEquipment = equipment.map(item =>
-        item.id === editingId
-          ? { ...item, name: form.name, type: form.type, description: form.description, quantity: parseInt(form.quantity) || 0, condition: form.condition, rentalPrice: form.rentalPrice }
-          : item
-      );
-      setEquipment(updatedEquipment);
-      setEditingId(null);
-    } else {
-      // Add new equipment
-      const newEquipment: Equipment = {
-        id: (equipment.length + 1).toString(),
+    handleSaveEquipment();
+  };
+
+  const handleSaveEquipment = async () => {
+    setLoading(true);
+    setError(null);
+  
+    try {
+      const payload = {
         name: form.name,
         type: form.type,
         description: form.description,
         quantity: parseInt(form.quantity) || 0,
         condition: form.condition,
-        rentalPrice: form.rentalPrice,
-        addedDate: new Date().toISOString().split('T')[0]
+        rentalPrice: form.rentalPrice.replace('$', '').replace('/day', '').trim()
       };
-      setEquipment([...equipment, newEquipment]);
+
+      const url = editingId ? `${BACKEND}/equipment/${editingId}` : `${BACKEND}/equipment`;
+      const method = editingId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInfoMessage(editingId ? 'Equipment updated successfully' : 'Equipment added successfully');
+        fetchEquipment(); // Reload data
+        setForm({ name: "", type: "cart", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
+        setEditingId(null);
+        setShowForm(false);
+        setTimeout(() => setInfoMessage(null), 3000);
+      } else {
+        setError(result.error || 'Failed to save equipment');
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      setError('Failed to save equipment');
+    } finally {
+      setLoading(false);
     }
-    
-    setForm({ name: "", type: "cart", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
-    setShowForm(false);
   };
 
   const handleEdit = (item: Equipment) => {
@@ -107,7 +148,33 @@ export default function EquipmentPage() {
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this equipment?")) {
-      setEquipment(equipment.filter(item => item.id !== id));
+      deleteEquipment(id);
+    }
+  };
+
+  const deleteEquipment = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${BACKEND}/equipment/${id}`, {
+        method: "DELETE"
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInfoMessage("Equipment deleted successfully");
+        fetchEquipment();
+        setTimeout(() => setInfoMessage(null), 3000);
+      } else {
+        setError(result.error || "Failed to delete equipment");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError("Failed to delete equipment");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -806,3 +873,4 @@ export default function EquipmentPage() {
     </div>
   );
 }
+
