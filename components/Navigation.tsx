@@ -72,7 +72,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                   </div>
                 </div>
                 <div className="notification-card-footer">
-                  <button className="view-all-btn">View All</button>
+                  <button className="view-all-btn" onClick={() => window.location.href = '/notifications'}>View All</button>
                 </div>
               </div>
             )}

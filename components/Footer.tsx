@@ -146,10 +146,10 @@ export default function Footer() {
       <style jsx>{`
         /* Footer Styles */
         .footer-section {
-          background: linear-gradient(135deg, #0f7a04 0%, #13a905ff 50%, #16a34a 100%);
+          background: linear-gradient(135deg, #15241aff 0%, #0F7C6D 100%);
           position: relative;
-          z-index: 10;
-          margin-top: 4rem;
+          z-index: 1;
+          margin-top: 10rem;
           border-top: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: 0 -4px 20px rgba(19, 169, 5, 0.2);
         }
@@ -417,7 +417,7 @@ export default function Footer() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+          background: linear-gradient(90deg, #000000ff 0%, #062411ff 100%);
           color: #fff;
         }
         
