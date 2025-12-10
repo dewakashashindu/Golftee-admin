@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
@@ -7,89 +7,130 @@ import Footer from "../../components/Footer";
 interface Equipment {
   id: string;
   name: string;
-  type: 'cart' | 'clubs' | 'accessories' | 'maintenance';
+  type: "Golf Clubs" | "Golf Carts" | "Accessories" | "Maintenance Tools" | "Bags & Carriers" | "Training & Practice";
   description: string;
   quantity: number;
-  condition: 'excellent' | 'good' | 'fair' | 'needs_repair';
-  rentalPrice: string;
-  addedDate: string;
+  condition: "excellent" | "good" | "fair" | "needs_repair";
+  rentalPrice: string; // e.g. "$25/day" or "25"
+  addedDate: string; // ISO date or YYYY-MM-DD
 }
 
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
+
 export default function EquipmentPage() {
+  // UI state
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
-  const [equipment, setEquipment] = useState<Equipment[]>([
-    {
-      id: '1',
-      name: 'Golf Cart Premium',
-      type: 'cart',
-      description: 'Electric golf cart with GPS and cooler',
-      quantity: 25,
-      condition: 'excellent',
-      rentalPrice: '$45/day',
-      addedDate: '2025-01-15'
-    },
-    {
-      id: '2',
-      name: 'Callaway Driver Set',
-      type: 'clubs',
-      description: 'Complete driver set for beginners',
-      quantity: 12,
-      condition: 'good',
-      rentalPrice: '$25/day',
-      addedDate: '2025-01-10'
-    },
-    {
-      id: '3',
-      name: 'Golf Umbrella Large',
-      type: 'accessories',
-      description: 'Weather protection umbrellas',
-      quantity: 30,
-      condition: 'excellent',
-      rentalPrice: '$5/day',
-      addedDate: '2025-01-20'
-    }
-  ]);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [pageSize, setPageSize] = useState(6);
+
+  // data state
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  // controls
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterCondition, setFilterCondition] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"addedDate" | "name" | "price">("addedDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [form, setForm] = useState({
     name: "",
-    type: "cart" as Equipment['type'],
+    type: "Golf Carts" as Equipment['type'],
     description: "",
     quantity: "",
     condition: "excellent" as Equipment['condition'],
     rentalPrice: ""
   });
 
+  // Fetch equipment from API
+  useEffect(() => {
+    fetchEquipment();
+  }, []);
+
+  const fetchEquipment = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${BACKEND}/equipment`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Transform API data to match frontend interface
+        const transformed = result.data.map((item: any) => ({
+          id: item.id.toString(),
+          name: item.name,
+          type: item.type,
+          description: item.description || '',
+          quantity: item.quantity || 0,
+          condition: item.condition || 'good',
+          rentalPrice: item.rental_price ? `$${item.rental_price}` : '$0',
+          addedDate: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+        }));
+        setEquipment(transformed);
+        setTotal(transformed.length);
+      } else {
+        setError('Failed to load equipment');
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Failed to connect to server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingId) {
-      // Update existing equipment
-      const updatedEquipment = equipment.map(item =>
-        item.id === editingId
-          ? { ...item, name: form.name, type: form.type, description: form.description, quantity: parseInt(form.quantity) || 0, condition: form.condition, rentalPrice: form.rentalPrice }
-          : item
-      );
-      setEquipment(updatedEquipment);
-      setEditingId(null);
-    } else {
-      // Add new equipment
-      const newEquipment: Equipment = {
-        id: (equipment.length + 1).toString(),
+    handleSaveEquipment();
+  };
+
+  const handleSaveEquipment = async () => {
+    setLoading(true);
+    setError(null);
+  
+    try {
+      const payload = {
         name: form.name,
         type: form.type,
         description: form.description,
         quantity: parseInt(form.quantity) || 0,
         condition: form.condition,
-        rentalPrice: form.rentalPrice,
-        addedDate: new Date().toISOString().split('T')[0]
+        rentalPrice: form.rentalPrice.replace('$', '').replace('/day', '').trim()
       };
-      setEquipment([...equipment, newEquipment]);
+
+      const url = editingId ? `${BACKEND}/equipment/${editingId}` : `${BACKEND}/equipment`;
+      const method = editingId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInfoMessage(editingId ? 'Equipment updated successfully' : 'Equipment added successfully');
+        fetchEquipment(); // Reload data
+        setForm({ name: "", type: "Golf Carts", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
+        setEditingId(null);
+        setShowForm(false);
+        setTimeout(() => setInfoMessage(null), 3000);
+      } else {
+        setError(result.error || 'Failed to save equipment');
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      setError('Failed to save equipment');
+    } finally {
+      setLoading(false);
     }
-    
-    setForm({ name: "", type: "cart", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
-    setShowForm(false);
   };
 
   const handleEdit = (item: Equipment) => {
@@ -107,40 +148,84 @@ export default function EquipmentPage() {
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this equipment?")) {
-      setEquipment(equipment.filter(item => item.id !== id));
+      deleteEquipment(id);
+    }
+  };
+
+  const deleteEquipment = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${BACKEND}/equipment/${id}`, {
+        method: "DELETE"
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInfoMessage("Equipment deleted successfully");
+        fetchEquipment();
+        setTimeout(() => setInfoMessage(null), 3000);
+      } else {
+        setError(result.error || "Failed to delete equipment");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError("Failed to delete equipment");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCancelEdit = () => {
-    setForm({ name: "", type: "cart", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
+    setForm({ name: "", type: "Golf Carts", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
     setEditingId(null);
     setShowForm(false);
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'cart':
+      case 'Golf Carts':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m6.75 4.5v-3a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v3m-6 0h6m6 0V9a1.5 1.5 0 00-1.5-1.5h-3A1.5 1.5 0 0012 9v.75m1.5 4.5h6m0 0V9a1.5 1.5 0 00-1.5-1.5H15m4.5 6.75h.75a.75.75 0 00.75-.75V12a.75.75 0 00-.75-.75h-.75m0 0V9" />
           </svg>
         );
-      case 'clubs':
+      case 'Golf Clubs':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
           </svg>
         );
-      case 'accessories':
+      case 'Accessories':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
         );
-      case 'maintenance':
+      case 'Maintenance Tools':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
             <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+          </svg>
+        );
+      case 'Bags & Carriers':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        );
+      case 'Training & Practice':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+          </svg>
+        );
+      default:
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="equipment-type-icon">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
         );
     }
@@ -211,11 +296,14 @@ export default function EquipmentPage() {
                     <select
                       value={form.type}
                       onChange={(e) => setForm({...form, type: e.target.value as Equipment['type']})}
+                      title="Equipment Type"
                     >
-                      <option value="cart">Golf Cart</option>
-                      <option value="clubs">Golf Clubs</option>
-                      <option value="accessories">Accessories</option>
-                      <option value="maintenance">Maintenance</option>
+                      <option value="Golf Clubs">Golf Clubs</option>
+                      <option value="Golf Carts">Golf Carts</option>
+                      <option value="Accessories">Accessories</option>
+                      <option value="Maintenance Tools">Maintenance Tools</option>
+                      <option value="Bags & Carriers">Bags & Carriers</option>
+                      <option value="Training & Practice">Training & Practice</option>
                     </select>
                   </div>
                   
@@ -227,6 +315,7 @@ export default function EquipmentPage() {
                       onChange={(e) => setForm({...form, quantity: e.target.value})}
                       required
                       min="1"
+                      title="Equipment Quantity"
                     />
                   </div>
                 </div>
@@ -247,6 +336,7 @@ export default function EquipmentPage() {
                     <select
                       value={form.condition}
                       onChange={(e) => setForm({...form, condition: e.target.value as Equipment['condition']})}
+                      title="Equipment Condition"
                     >
                       <option value="excellent">Excellent</option>
                       <option value="good">Good</option>
@@ -808,3 +898,4 @@ export default function EquipmentPage() {
     </div>
   );
 }
+

@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
+const { sendCancellationEmail } = require('./utils/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret';
 
@@ -183,10 +184,63 @@ app.post('/api/auth/login', validate(loginSchema), async (req, res) => {
 app.get('/api/bookings', async (req, res) => {
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
-      if (error) return res.status(500).json({ error: error.message });
-      return res.json({ bookings: data });
+      // Fetch bookings data
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (bookingsError) {
+        console.log('Supabase error:', bookingsError);
+        return res.status(500).json({ error: bookingsError.message });
+      }
+
+      // Fetch all users
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, name, email, phoneNumber');
+      
+      if (usersError) {
+        console.log('Users fetch error:', usersError);
+      }
+
+      // Create a user lookup map
+      const userMap = new Map();
+      if (users) {
+        users.forEach(user => userMap.set(user.id, user));
+      }
+
+      // Log first booking to see actual field names
+      if (bookings && bookings.length > 0) {
+        console.log('First booking from Supabase:', JSON.stringify(bookings[0], null, 2));
+        const user = userMap.get(bookings[0].user_id);
+        if (user) {
+          console.log('Matched user:', JSON.stringify(user, null, 2));
+        }
+      }
+
+      // Transform Supabase data to match frontend expectations
+      const transformed = (bookings || []).map(booking => {
+        const user = userMap.get(booking.user_id);
+        return {
+          id: booking.id,
+          fullName: user?.name || 'N/A',
+          phoneNo: user?.phoneNumber || 'N/A',
+          courseName: booking.court_name?.replace(/_/g, ' ') || 'N/A',
+          date: booking.date,
+          startTime: booking.time,
+          endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
+          noPlayers: booking.players_count || 0,
+          nonPlayers: booking.non_players_count || 0,
+          paymentStatus: booking.payment_status || 'UNPAID',
+          bookingStatus: booking.status?.toUpperCase() || 'PENDING',
+          createdAt: booking.created_at,
+        };
+      });
+      
+      return res.json({ bookings: transformed });
     } catch (err) {
+      console.error('Bookings error:', err);
       return res.status(500).json({ error: err.message });
     }
   }
@@ -200,6 +254,23 @@ app.get('/api/bookings', async (req, res) => {
   }
   return res.json({ bookings });
 });
+
+// Helper function to calculate end time; returns HH:MM formatted string
+function calculateEndTime(dateStr, startTime, durationMinutes) {
+  if (!startTime || !durationMinutes) return null;
+  try {
+    const baseDate = dateStr ? `${dateStr}T${startTime}` : `1970-01-01T${startTime}`;
+    const start = new Date(baseDate);
+    if (Number.isFinite(durationMinutes)) {
+      start.setMinutes(start.getMinutes() + Number(durationMinutes));
+    }
+    const hh = String(start.getHours()).padStart(2, '0');
+    const mm = String(start.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  } catch (e) {
+    return null;
+  }
+}
 
 // Auth middleware - verify Bearer token using Supabase
 async function verifyToken(req, res, next) {
@@ -277,6 +348,99 @@ app.post('/api/bookings', verifyToken, validate(bookingSchema), async (req, res)
   bookings.push(b);
   notifications.push({ id: makeId('n_'), type: 'booking', text: `New booking: ${name}`, createdAt: new Date().toISOString() });
   res.status(201).json({ booking: b });
+});
+
+// Cancel a booking (mark as cancelled instead of deleting)
+app.put('/api/bookings/:id/cancel', async (req, res) => {
+  const { id } = req.params;
+
+  if (supabase) {
+    try {
+      // Get booking and user details before updating
+      const { data: bookingData } = await supabase
+        .from('bookings')
+        .select('*, users(name, email, phoneNumber)')
+        .eq('id', id)
+        .single();
+
+      // Update booking status
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ status: 'Cancelled' })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+
+      // Send cancellation email to customer
+      if (bookingData && bookingData.users?.email) {
+        const bookingWithDetails = {
+          id: data.id,
+          fullName: bookingData.users?.name || 'Customer',
+          email: bookingData.users?.email,
+          courseName: data.court_name?.replace(/_/g, ' ') || 'N/A',
+          date: data.date,
+          startTime: data.time,
+          endTime: calculateEndTime(data.date, data.time, data.duration_minutes),
+          noPlayers: data.players_count || 0,
+        };
+        await sendCancellationEmail(bookingData.users.email, bookingWithDetails);
+      }
+
+      return res.json({ message: 'Booking cancelled and email sent', data });
+    } catch (err) {
+      console.error('Bookings cancel error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (prisma) {
+    try {
+      // Get booking details before updating
+      const bookingData = await prisma.booking.findUnique({
+        where: { id },
+        include: { user: true },
+      });
+
+      // Update booking status
+      const updated = await prisma.booking.update({
+        where: { id },
+        data: { status: 'cancelled' },
+      });
+
+      // Send cancellation email
+      if (bookingData && bookingData.user?.email) {
+        const bookingWithDetails = {
+          id: updated.id,
+          fullName: bookingData.user?.name || 'Customer',
+          email: bookingData.user?.email,
+          courseName: updated.courseName || 'N/A',
+          date: updated.date.toISOString().split('T')[0],
+          startTime: updated.startTime || 'N/A',
+          endTime: updated.endTime || 'N/A',
+          noPlayers: updated.noPlayers || 0,
+        };
+        await sendCancellationEmail(bookingData.user.email, bookingWithDetails);
+      }
+
+      return res.json({ message: 'Booking cancelled and email sent', data: updated });
+    } catch (err) {
+      console.error('Prisma cancel error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // In-memory fallback
+  const bookingIndex = bookings.findIndex(b => b.id === id);
+  if (bookingIndex === -1) {
+    return res.status(404).json({ error: 'Booking not found' });
+  }
+
+  bookings[bookingIndex].status = 'cancelled';
+  res.json({ message: 'Booking cancelled', data: bookings[bookingIndex] });
 });
 
 // Events
@@ -476,6 +640,248 @@ app.post('/api/admin/bookings', validate(adminBookingSchema), async (req, res) =
   }
 
   return res.status(404).json({ error: 'no database configured' });
+});
+
+// Admin: list all bookings (secured)
+app.get('/api/bookings/admin/all', verifyToken, async (req, res) => {
+  // Only allow if token verified (verifyToken attaches req.user)
+  try {
+    if (supabase) {
+      const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ bookings: data });
+    }
+
+    if (prisma) {
+      const data = await prisma.booking.findMany({ orderBy: { createdAt: 'desc' } });
+      return res.json({ bookings: data });
+    }
+
+    // fallback in-memory
+    return res.json({ bookings });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------
+// EQUIPMENT ENDPOINTS
+// ----------------------
+
+/**
+ * GET /api/equipment
+ * List all equipment (supports optional filters)
+ */
+app.get("/api/equipment", async (req, res) => {
+  try {
+    const { type, condition, search } = req.query;
+
+    if (supabase) {
+      let query = supabase.from("equipment").select("*");
+
+      if (type) query = query.eq("type", type);
+      if (condition) query = query.eq("condition", condition);
+      if (search) {
+        query = query.ilike("name", `%${search}%`);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return res.json({ success: true, data: data || [] });
+    }
+
+    if (prisma) {
+      // Prisma fallback (if you add equipment model to schema)
+      const equipment = await prisma.equipment.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+      return res.json({ success: true, data: equipment });
+    }
+
+    // In-memory fallback
+    return res.json({ success: true, data: [] });
+  } catch (err) {
+    console.error('Equipment GET error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * POST /api/equipment
+ * Add new equipment
+ */
+app.post("/api/equipment", async (req, res) => {
+  try {
+    const {
+      name,
+      type,
+      condition,
+      rentalPrice,
+      quantity,
+      description,
+      image,
+      location,
+      available
+    } = req.body;
+
+    if (!name || !type) {
+      return res.status(400).json({ success: false, error: 'name and type are required' });
+    }
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("equipment")
+        .insert([{
+          name,
+          type,
+          condition: condition || 'good',
+          rental_price: rentalPrice || '0',
+          quantity: quantity || 1,
+          description: description || '',
+          image: image || null,
+          location: location || null,
+          available: available !== false,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, ...data });
+    }
+
+    if (prisma) {
+      const created = await prisma.equipment.create({
+        data: {
+          name,
+          type,
+          condition: condition || 'good',
+          rentalPrice: rentalPrice || '0',
+          quantity: quantity || 1,
+          description: description || '',
+        }
+      });
+      return res.json({ success: true, ...created });
+    }
+
+    // In-memory fallback
+    const newEquip = {
+      id: makeId('eq_'),
+      name,
+      type,
+      condition: condition || 'good',
+      rentalPrice: rentalPrice || '0',
+      quantity: quantity || 1,
+      description: description || '',
+      addedDate: new Date().toISOString().split('T')[0]
+    };
+    return res.json({ success: true, ...newEquip });
+  } catch (err) {
+    console.error('Equipment POST error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * PUT /api/equipment/:id
+ * Update equipment
+ */
+app.put("/api/equipment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      name,
+      type,
+      condition,
+      rentalPrice,
+      quantity,
+      description,
+      image,
+      location,
+      available,
+    } = req.body;
+
+    if (supabase) {
+      const updateData = {};
+      if (name !== undefined) updateData.name = name;
+      if (type !== undefined) updateData.type = type;
+      if (condition !== undefined) updateData.condition = condition;
+      if (rentalPrice !== undefined) updateData.rental_price = rentalPrice;
+      if (quantity !== undefined) updateData.quantity = quantity;
+      if (description !== undefined) updateData.description = description;
+      if (image !== undefined) updateData.image = image;
+      if (location !== undefined) updateData.location = location;
+      if (available !== undefined) updateData.available = available;
+
+      const { data, error } = await supabase
+        .from("equipment")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, ...data });
+    }
+
+    if (prisma) {
+      const updated = await prisma.equipment.update({
+        where: { id },
+        data: {
+          name,
+          type,
+          condition,
+          rentalPrice,
+          quantity,
+          description,
+        }
+      });
+      return res.json({ success: true, ...updated });
+    }
+
+    return res.json({ success: true, message: 'Equipment updated' });
+  } catch (err) {
+    console.error('Equipment PUT error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * DELETE /api/equipment/:id
+ * Remove equipment
+ */
+app.delete("/api/equipment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (supabase) {
+      const { error } = await supabase
+        .from("equipment")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      return res.json({ success: true, message: "Equipment deleted." });
+    }
+
+    if (prisma) {
+      await prisma.equipment.delete({ where: { id } });
+      return res.json({ success: true, message: "Equipment deleted." });
+    }
+
+    return res.json({ success: true, message: "Equipment deleted." });
+  } catch (err) {
+    console.error('Equipment DELETE error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Fallback

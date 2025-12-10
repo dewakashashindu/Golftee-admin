@@ -14,18 +14,83 @@ export default function BookingsPage() {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
 
+  // Handle cancel booking
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      const response = await fetch(`${apiUrl}/bookings/${bookingId}/cancel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        // Update local state to show cancelled status
+        setBookings(prevBookings =>
+          prevBookings.map(b =>
+            b.id === bookingId ? { ...b, bookingStatus: "CANCELLED" } : b
+          )
+        );
+        alert("Booking cancelled successfully");
+      } else {
+        alert("Failed to cancel booking");
+      }
+    } catch (err) {
+      console.error("Error cancelling booking:", err);
+      alert("Error cancelling booking");
+    }
+  };
+  useEffect(() => {
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch("/api/bookings")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    if (!apiUrl) {
+      setError("NEXT_PUBLIC_API_URL is not set");
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    fetch(`${apiUrl}/bookings`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        if (mounted) setBookings(Array.isArray(data) ? data : []);
+        if (!mounted) return;
+        console.log("Fetched bookings data:", data);
+        const list = Array.isArray(data) ? data : data?.bookings || [];
+        console.log("Parsed bookings list:", list);
+        
+        // Helper to treat empty strings as missing
+        const getValid = (val: any) => val && val !== "" ? val : null;
+        
+        // Normalize field names to handle backend inconsistencies
+        const normalized = list.map((b: any) => ({
+          ...b,
+          fullName: getValid(b.fullName) || getValid(b.customer_name) || getValid(b.name) || getValid(b.customer?.name) || getValid(b.user?.name) || "N/A",
+          phoneNo: getValid(b.phoneNo) || getValid(b.phone) || getValid(b.phone_number) || getValid(b.customer?.phone) || getValid(b.user?.phone) || "N/A",
+          courseName: getValid(b.courseName) || getValid(b.court_name) || getValid(b.course) || getValid(b.course_name) || "N/A",
+          startTime: getValid(b.startTime) || getValid(b.start_time) || getValid(b.time) || "N/A",
+          endTime: getValid(b.endTime) || getValid(b.end_time) || "N/A",
+          noPlayers: b.noPlayers || b.players_count || b.players || 0,
+          nonPlayers: b.nonPlayers || b.non_players_count || b.non_players || 0,
+          paymentStatus: getValid(b.paymentStatus) || getValid(b.payment_status) || "UNPAID",
+          bookingStatus: getValid(b.bookingStatus) || getValid(b.status) || "PENDING",
+          createdAt: getValid(b.createdAt) || getValid(b.created_at) || new Date().toISOString(),
+        }));
+        
+        console.log("Normalized bookings:", normalized);
+        setBookings(normalized);
       })
       .catch((err) => {
+        console.error("Error fetching bookings:", err);
         if (mounted) setError(String(err));
       })
       .finally(() => {
@@ -48,16 +113,31 @@ export default function BookingsPage() {
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     return bookings.filter((booking: any) => {
-      const bookingDate = new Date(booking.date);
+      let bookingDate = new Date(booking.date);
+      bookingDate.setHours(0, 0, 0, 0);
+      const todayDate = new Date(today);
+      todayDate.setHours(0, 0, 0, 0);
+      
       switch (filterType) {
         case "today":
-          return booking.date === today.toISOString().split("T")[0];
+          return bookingDate.getTime() === todayDate.getTime();
         case "week":
-          return bookingDate >= startOfWeek && bookingDate <= endOfWeek;
+          const weekStart = new Date(startOfWeek);
+          const weekEnd = new Date(endOfWeek);
+          weekStart.setHours(0, 0, 0, 0);
+          weekEnd.setHours(23, 59, 59, 999);
+          return bookingDate >= weekStart && bookingDate <= weekEnd;
         case "month":
-          return bookingDate >= startOfMonth && bookingDate <= endOfMonth;
+          const monthStart = new Date(startOfMonth);
+          const monthEnd = new Date(endOfMonth);
+          monthStart.setHours(0, 0, 0, 0);
+          monthEnd.setHours(23, 59, 59, 999);
+          return bookingDate >= monthStart && bookingDate <= monthEnd;
         case "custom":
-          return customDate ? booking.date === customDate : true;
+          if (!customDate) return true;
+          const customDateObj = new Date(customDate);
+          customDateObj.setHours(0, 0, 0, 0);
+          return bookingDate.getTime() === customDateObj.getTime();
         default:
           return true;
       }
@@ -124,32 +204,52 @@ export default function BookingsPage() {
               <table className="bookings-table">
                 <thead>
                   <tr className="table-header">
-                    <th>Full Name</th>
+                    <th>Booking ID</th>
+                    <th>Customer Name</th>
+                    <th>Phone Number</th>
+                    <th>Course Name</th>
                     <th>Date</th>
                     <th>Start Time</th>
                     <th>End Time</th>
-                    <th>No. Players</th>
+                    <th>Players</th>
                     <th>Non Players</th>
-                    <th>Email</th>
-                    <th>Phone No</th>
-                    <th>Status</th>
+                    <th>Payment Status</th>
+                    <th>Booking Status</th>
+                    <th>Created At</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredBookings.map((booking: any) => (
                     <tr key={booking.id} className="table-row">
+                      <td>{booking.id}</td>
                       <td>{booking.fullName}</td>
+                      <td>{booking.phoneNo}</td>
+                      <td>{booking.courseName}</td>
                       <td>{booking.date}</td>
                       <td>{booking.startTime}</td>
                       <td>{booking.endTime}</td>
                       <td>{booking.noPlayers}</td>
                       <td>{booking.nonPlayers}</td>
-                      <td>{booking.email}</td>
-                      <td>{booking.phoneNo}</td>
                       <td>
-                        <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>
-                          {booking.status}
+                        <span className={`status-badge ${booking.paymentStatus?.toLowerCase?.()}`}>
+                          {booking.paymentStatus}
                         </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${booking.bookingStatus?.toLowerCase?.()}`}>
+                          {booking.bookingStatus}
+                        </span>
+                      </td>
+                      <td>{new Date(booking.createdAt).toLocaleString()}</td>
+                      <td>
+                        <button
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={booking.bookingStatus === "CANCELLED"}
+                          className="cancel-booking-btn"
+                        >
+                          {booking.bookingStatus === "CANCELLED" ? "Cancelled" : "Cancel"}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -161,9 +261,21 @@ export default function BookingsPage() {
                   <div key={booking.id} className="booking-card">
                     <div className="booking-card-header">
                       <div className="booking-card-name">{booking.fullName}</div>
-                      <span className={`status-badge ${booking.status?.toLowerCase?.()}`}>{booking.status}</span>
+                      <span className={`status-badge ${booking.bookingStatus?.toLowerCase?.()}`}>{booking.bookingStatus}</span>
                     </div>
                     <div className="booking-card-details">
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Booking ID</span>
+                        <span className="booking-detail-value">{booking.id}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Phone</span>
+                        <span className="booking-detail-value">{booking.phoneNo}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Course</span>
+                        <span className="booking-detail-value">{booking.courseName}</span>
+                      </div>
                       <div className="booking-detail">
                         <span className="booking-detail-label">Date</span>
                         <span className="booking-detail-value">{booking.date}</span>
@@ -181,12 +293,8 @@ export default function BookingsPage() {
                         <span className="booking-detail-value">{booking.nonPlayers}</span>
                       </div>
                       <div className="booking-detail">
-                        <span className="booking-detail-label">Email</span>
-                        <span className="booking-detail-value">{booking.email}</span>
-                      </div>
-                      <div className="booking-detail">
-                        <span className="booking-detail-label">Phone</span>
-                        <span className="booking-detail-value">{booking.phoneNo}</span>
+                        <span className="booking-detail-label">Payment</span>
+                        <span className="booking-detail-value">{booking.paymentStatus}</span>
                       </div>
                     </div>
                   </div>
@@ -667,6 +775,27 @@ export default function BookingsPage() {
         .status-badge.cancelled {
           background: #fee2e2;
           color: #dc2626;
+        }
+        .cancel-booking-btn {
+          padding: 0.5rem 1rem;
+          background: #dc2626;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .cancel-booking-btn:hover:not(:disabled) {
+          background: #b91c1c;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        .cancel-booking-btn:disabled {
+          background: #ef5350;
+          opacity: 0.6;
+          cursor: not-allowed;
         }
         @media (max-width: 1400px) {
           .main-content {
