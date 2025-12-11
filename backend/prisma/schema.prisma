@@ -32,6 +32,45 @@ model Booking {
   createdAt  DateTime @default(now())
   user       User?    @relation(fields: [userId], references: [id])
   userId     String?
+  equipment  BookingEquipment[]
+}
+
+model Equipment {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  condition   String   @default("good")
+  rentalPrice String   @default("0")
+  rental_price String?  // For Supabase compatibility
+  quantity    Int      @default(1)
+  description String?
+  image       String?
+  location    String?
+  available   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  bookings    BookingEquipment[]
+}
+
+model BookingEquipment {
+  id              String    @id @default(cuid())
+  equipment_id    String
+  user_id         String?
+  quantity        Int       @default(1)
+  pickup_date     String?
+  pickup_time     String?
+  return_date     String?
+  return_time     String?
+  notes           String?
+  status          String    @default("pending")
+  estimated_cost  String    @default("0.00")
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  
+  // Optional relations for backward compatibility
+  booking         Booking?   @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  bookingId       String?
+  equipment       Equipment? @relation(fields: [equipment_id], references: [id], onDelete: SetNull)
 }
 
 model Event {
