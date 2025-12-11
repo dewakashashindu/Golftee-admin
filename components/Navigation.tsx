@@ -8,6 +8,7 @@ interface NavigationProps {
 export default function Navigation({ currentPage }: NavigationProps) {
   const [showNotificationCard, setShowNotificationCard] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [showBookingsDropdown, setShowBookingsDropdown] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
 
   return (
@@ -17,7 +18,27 @@ export default function Navigation({ currentPage }: NavigationProps) {
         <div className="nav-container">
           <div className="nav-links">
             <a href="/home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`}>Home</a>
-          <a href="/bookings" className={`nav-link ${currentPage === 'bookings' ? 'active' : ''}`}>Bookings</a>
+          <div 
+            className="nav-link nav-dropdown" 
+            onClick={() => setShowBookingsDropdown((v) => !v)} 
+            onMouseLeave={() => setShowBookingsDropdown(false)}
+            style={{ position: 'relative' }}
+          >
+            <span className={currentPage === 'bookings' || currentPage === 'equipment-bookings' ? 'active' : ''}>Bookings</span>
+            <div className="dropdown-arrow">▼</div>
+            {showBookingsDropdown && (
+              <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                <a href="/bookings" className="dropdown-item">
+                  <span className="dropdown-icon">📅</span>
+                  All Bookings
+                </a>
+                <a href="/equipment-bookings" className="dropdown-item">
+                  <span className="dropdown-icon">🏌️</span>
+                  Equipment Bookings
+                </a>
+              </div>
+            )}
+          </div>
           <a href="/analytics" className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}>Analytics</a>
           <a href="/equipment" className={`nav-link ${currentPage === 'equipment' ? 'active' : ''}`}>Equipment</a>
           <a href="/events" className={`nav-link ${currentPage === 'events' ? 'active' : ''}`}>Events</a>

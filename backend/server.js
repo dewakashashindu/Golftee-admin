@@ -884,6 +884,251 @@ app.delete("/api/equipment/:id", async (req, res) => {
   }
 });
 
+// EQUIPMENT BOOKING ENDPOINTS
+// ----------------------
+
+/**
+ * GET /api/booking-equipment
+ * Get all equipment bookings with details
+ */
+app.get("/api/booking-equipment", async (req, res) => {
+  try {
+    if (supabase) {
+      // First get equipment bookings with equipment details
+      const { data: bookings, error: bookingsError } = await supabase
+        .from("equipment_bookings")
+        .select(`
+          id,
+          equipment_id,
+          user_id,
+          quantity,
+          pickup_date,
+          pickup_time,
+          return_date,
+          return_time,
+          notes,
+          status,
+          estimated_cost,
+          created_at,
+          updated_at
+        `)
+        .order("created_at", { ascending: false });
+
+      if (bookingsError) throw bookingsError;
+
+      // Get unique user IDs
+      const userIds = [...new Set((bookings || []).map(b => b.user_id))];
+      
+      // Get unique equipment IDs
+      const equipmentIds = [...new Set((bookings || []).map(b => b.equipment_id))];
+
+      // Fetch users
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, username, email, phone_number")
+        .in("id", userIds);
+
+      // Fetch equipment
+      const { data: equipment } = await supabase
+        .from("equipment")
+        .select("*")
+        .in("id", equipmentIds);
+
+      // Create lookup maps
+      const userMap = (users || []).reduce((map, user) => {
+        map[user.id] = user;
+        return map;
+      }, {});
+
+      const equipmentMap = (equipment || []).reduce((map, eq) => {
+        map[eq.id] = eq;
+        return map;
+      }, {});
+      
+      // Transform data to match expected format
+      const transformed = (bookings || []).map((item) => {
+        const user = userMap[item.user_id] || {};
+        const eq = equipmentMap[item.equipment_id] || {};
+        
+        return {
+          id: item.id,
+          bookingId: item.user_id,
+          equipmentId: item.equipment_id,
+          quantity: item.quantity,
+          rentalPrice: item.estimated_cost ? item.estimated_cost.toString() : "0",
+          createdAt: item.created_at,
+          booking: {
+            id: item.user_id,
+            name: user.username || "Unknown User",
+            fullName: user.username || "Unknown User",
+            date: item.pickup_date,
+            startTime: item.pickup_time,
+            endTime: item.return_time,
+            email: user.email,
+            phoneNo: user.phone_number,
+            status: item.status,
+            members: item.quantity
+          },
+          equipment: {
+            id: eq.id,
+            name: eq.name || "Unknown Equipment",
+            type: eq.type || "Unknown",
+            condition: eq.condition || "good",
+            rentalPrice: eq.rental_price ? eq.rental_price.toString() : "0",
+            quantity: eq.quantity || 0,
+            description: eq.description
+          }
+        };
+      });
+      
+      return res.json({ success: true, data: transformed });
+    }
+
+    if (prisma) {
+      const bookingEquipment = await prisma.bookingEquipment.findMany({
+        include: {
+          booking: {
+            include: {
+              user: {
+                select: { id: true, username: true, email: true }
+              }
+            }
+          },
+          equipment: true
+        },
+        orderBy: { created_at: 'desc' }
+      });
+      return res.json({ success: true, data: bookingEquipment });
+    }
+
+    return res.json({ success: true, data: [] });
+  } catch (err) {
+    console.error('Booking equipment GET error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/booking-equipment/:bookingId
+ * Get equipment for a specific booking
+ */
+app.get("/api/booking-equipment/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    if (prisma) {
+      const bookingEquipment = await prisma.bookingEquipment.findMany({
+        where: { bookingId },
+        include: {
+          equipment: true
+        }
+      });
+      return res.json({ success: true, data: bookingEquipment });
+    }
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("booking_equipment")
+        .select(`
+          *,
+          equipment:equipment(*)
+        `)
+        .eq("booking_id", bookingId);
+
+      if (error) throw error;
+      return res.json({ success: true, data: data || [] });
+    }
+
+    return res.json({ success: true, data: [] });
+  } catch (err) {
+    console.error('Booking equipment by booking GET error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/booking-equipment
+ * Add equipment to a booking
+ */
+app.post("/api/booking-equipment", async (req, res) => {
+  try {
+    const { bookingId, equipmentId, quantity, rentalPrice } = req.body;
+
+    if (!bookingId || !equipmentId) {
+      return res.status(400).json({ success: false, error: 'bookingId and equipmentId are required' });
+    }
+
+    if (prisma) {
+      const bookingEquipment = await prisma.bookingEquipment.create({
+        data: {
+          bookingId,
+          equipmentId,
+          quantity: quantity || 1,
+          rentalPrice: rentalPrice || '0'
+        },
+        include: {
+          booking: true,
+          equipment: true
+        }
+      });
+      return res.json({ success: true, data: bookingEquipment });
+    }
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("booking_equipment")
+        .insert([{
+          booking_id: bookingId,
+          equipment_id: equipmentId,
+          quantity: quantity || 1,
+          rental_price: rentalPrice || '0'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.json({ success: true, data });
+    }
+
+    return res.json({ success: true, message: 'Equipment added to booking' });
+  } catch (err) {
+    console.error('Booking equipment POST error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/booking-equipment/:id
+ * Remove equipment from a booking
+ */
+app.delete("/api/booking-equipment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (prisma) {
+      await prisma.bookingEquipment.delete({
+        where: { id }
+      });
+      return res.json({ success: true, message: "Equipment removed from booking" });
+    }
+
+    if (supabase) {
+      const { error } = await supabase
+        .from("equipment_bookings")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      return res.json({ success: true, message: "Equipment booking removed" });
+    }
+
+    return res.json({ success: true, message: "Equipment removed from booking" });
+  } catch (err) {
+    console.error('Booking equipment DELETE error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Fallback
 app.use((req, res) => {
   res.status(404).json({ error: 'not found' });
