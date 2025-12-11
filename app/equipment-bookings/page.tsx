@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
+import PageTransition from "../../components/PageTransition";
 
 interface Equipment {
   id: string;
@@ -161,6 +162,16 @@ export default function EquipmentBookingsPage() {
     }
   };
 
+  const normalizeStatus = (status?: string) => {
+    const v = (status || "").toLowerCase();
+    if (v === "canceled") return "cancelled";
+    return v;
+  };
+
+  const normalizeConditionClass = (condition?: string) => {
+    return (condition || "").toLowerCase().replace(/\s+/g, "_");
+  };
+
   const filteredBookings = useMemo(() => {
     return bookingEquipment.filter((item) => {
       const matchesSearch =
@@ -170,7 +181,7 @@ export default function EquipmentBookingsPage() {
         item.booking?.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
-        filterStatus === "all" || item.booking?.status?.toLowerCase() === filterStatus.toLowerCase();
+        filterStatus === "all" || normalizeStatus(item.booking?.status) === filterStatus.toLowerCase();
 
       const matchesType =
         filterType === "all" || item.equipment?.type?.toLowerCase() === filterType.toLowerCase();
@@ -193,7 +204,6 @@ export default function EquipmentBookingsPage() {
 
   return (
     <div className="equipment-bookings-container">
-      <title>Equipment Bookings - GolfTee Admin</title>
 
       {/* Background Circles */}
       <div className="bg-circle-left" />
@@ -202,6 +212,7 @@ export default function EquipmentBookingsPage() {
       <Navigation currentPage="equipment-bookings" />
 
       {/* Main Content */}
+      <PageTransition>
       <div className="main-content">
         <div className="page-header">
           <div className="header-top">
@@ -321,7 +332,7 @@ export default function EquipmentBookingsPage() {
                         <td>{item.equipment?.name || "N/A"}</td>
                         <td>{item.equipment?.type || "N/A"}</td>
                         <td>
-                          <span className={`condition-badge ${item.equipment?.condition?.toLowerCase()}`}>
+                          <span className={`condition-badge ${(item.equipment?.condition || "").toLowerCase().replace(/\s+/g, "_")}`}>
                             {item.equipment?.condition || "N/A"}
                           </span>
                         </td>
@@ -329,7 +340,7 @@ export default function EquipmentBookingsPage() {
                         <td>${item.rentalPrice || item.equipment?.rentalPrice || "0"}</td>
                         <td className="price-cell">${calculateTotalPrice(item)}</td>
                         <td>
-                          <span className={`status-badge ${item.booking?.status?.toLowerCase()}`}>
+                          <span className={`status-badge ${(() => { const v = (item.booking?.status || '').toLowerCase(); return v === 'canceled' ? 'cancelled' : v; })()}`}>
                             {item.booking?.status || "N/A"}
                           </span>
                         </td>
@@ -362,7 +373,7 @@ export default function EquipmentBookingsPage() {
                         <div className="booking-card-name">
                           {item.booking?.fullName || item.booking?.name || "N/A"}
                         </div>
-                        <span className={`status-badge ${item.booking?.status?.toLowerCase()}`}>
+                        <span className={`status-badge ${(() => { const v = (item.booking?.status || '').toLowerCase(); return v === 'canceled' ? 'cancelled' : v; })()}`}>
                           {item.booking?.status || "N/A"}
                         </span>
                       </div>
@@ -381,7 +392,7 @@ export default function EquipmentBookingsPage() {
                         </div>
                         <div className="booking-detail">
                           <span className="booking-detail-label">Condition</span>
-                          <span className={`condition-badge ${item.equipment?.condition?.toLowerCase()}`}>
+                          <span className={`condition-badge ${(item.equipment?.condition || "").toLowerCase().replace(/\s+/g, "_")}`}>
                             {item.equipment?.condition || "N/A"}
                           </span>
                         </div>
@@ -418,6 +429,7 @@ export default function EquipmentBookingsPage() {
           )}
         </div>
       </div>
+      </PageTransition>
 
       <Footer />
 
