@@ -29,6 +29,25 @@ ChartJS.register(
   Legend
 );
 
+// Chart theme to match project styling
+const CHART_COLORS = {
+  text: "#374151", // gray-700
+  subtext: "#6b7280", // gray-500
+  grid: "#e5e7eb", // gray-200
+  primary: "#16a34a", // brand green
+  primaryLight: "#22c55e", // green-500
+  primarySoft: "#86efac", // green-300
+  blue: "#3b82f6", // blue-500
+  blueSoft: "#bfdbfe", // blue-200
+  amber: "#f59e0b",
+  amberSoft: "#fbbf24",
+  red: "#ef4444",
+  redDark: "#dc2626",
+};
+
+ChartJS.defaults.color = CHART_COLORS.text;
+ChartJS.defaults.font.family = "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+
 interface Booking {
   id: string;
   name: string;
@@ -432,15 +451,16 @@ export default function AnalyticsPage() {
                     {
                       label: "Bookings",
                       data: bookingTrend.data,
-                      borderColor: "#16a34a",
-                      backgroundColor: "rgba(22, 163, 74, 0.1)",
+                      borderColor: CHART_COLORS.primary,
+                      backgroundColor: "rgba(22, 163, 74, 0.15)",
                       borderWidth: 2,
                       fill: true,
                       tension: 0.4,
-                      pointBackgroundColor: "#16a34a",
+                      pointBackgroundColor: CHART_COLORS.primary,
                       pointBorderColor: "#fff",
                       pointBorderWidth: 2,
                       pointRadius: 4,
+                      pointHoverRadius: 6,
                     },
                   ],
                 }}
@@ -448,12 +468,36 @@ export default function AnalyticsPage() {
                   responsive: true,
                   maintainAspectRatio: true,
                   plugins: {
-                    legend: { position: "top" as const },
+                    legend: {
+                      position: "bottom" as const,
+                      labels: {
+                        color: CHART_COLORS.text,
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        boxHeight: 8,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: "rgba(17,17,17,0.9)",
+                      titleColor: "#ffffff",
+                      bodyColor: "#ffffff",
+                      borderColor: "#111827",
+                      borderWidth: 1,
+                      padding: 10,
+                      displayColors: false,
+                    },
                   },
                   scales: {
+                    x: {
+                      grid: { color: CHART_COLORS.grid },
+                      border: { display: false },
+                      ticks: { color: CHART_COLORS.subtext },
+                    },
                     y: {
                       beginAtZero: true,
-                      ticks: { stepSize: 1 },
+                      grid: { color: CHART_COLORS.grid },
+                      border: { display: false },
+                      ticks: { stepSize: 1, color: CHART_COLORS.subtext },
                     },
                   },
                 }}
@@ -470,10 +514,11 @@ export default function AnalyticsPage() {
                     {
                       label: "Revenue ($)",
                       data: revenueTrend.data,
-                      backgroundColor: "#22c55e",
-                      borderColor: "#16a34a",
+                      backgroundColor: CHART_COLORS.primarySoft,
+                      borderColor: CHART_COLORS.primary,
                       borderWidth: 1,
-                      borderRadius: 4,
+                      borderRadius: 8,
+                      maxBarThickness: 28,
                     },
                   ],
                 }}
@@ -481,11 +526,36 @@ export default function AnalyticsPage() {
                   responsive: true,
                   maintainAspectRatio: true,
                   plugins: {
-                    legend: { position: "top" as const },
+                    legend: {
+                      position: "bottom" as const,
+                      labels: {
+                        color: CHART_COLORS.text,
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        boxHeight: 8,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: "rgba(17,17,17,0.9)",
+                      titleColor: "#ffffff",
+                      bodyColor: "#ffffff",
+                      borderColor: "#111827",
+                      borderWidth: 1,
+                      padding: 10,
+                      displayColors: false,
+                    },
                   },
                   scales: {
+                    x: {
+                      grid: { color: CHART_COLORS.grid },
+                      border: { display: false },
+                      ticks: { color: CHART_COLORS.subtext },
+                    },
                     y: {
                       beginAtZero: true,
+                      grid: { color: CHART_COLORS.grid },
+                      border: { display: false },
+                      ticks: { color: CHART_COLORS.subtext },
                     },
                   },
                 }}
@@ -504,23 +574,49 @@ export default function AnalyticsPage() {
                     {
                       label: "Bookings",
                       data: courseUtilization.data,
-                      backgroundColor: "#3b82f6",
-                      borderColor: "#1e40af",
+                      backgroundColor: CHART_COLORS.blueSoft,
+                      borderColor: CHART_COLORS.blue,
                       borderWidth: 1,
-                      borderRadius: 4,
+                      borderRadius: 8,
+                      maxBarThickness: 28,
                     },
                   ],
                 }}
                 options={{
                   indexAxis: "y" as const,
                   responsive: true,
-                  maintainAspectRatio: true,
+                  maintainAspectRatio: false,
                   plugins: {
-                    legend: { position: "top" as const },
+                    legend: {
+                      position: "bottom" as const,
+                      labels: {
+                        color: CHART_COLORS.text,
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        boxHeight: 8,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: "rgba(17,17,17,0.9)",
+                      titleColor: "#ffffff",
+                      bodyColor: "#ffffff",
+                      borderColor: "#111827",
+                      borderWidth: 1,
+                      padding: 10,
+                      displayColors: false,
+                    },
                   },
                   scales: {
                     x: {
                       beginAtZero: true,
+                      grid: { color: CHART_COLORS.grid },
+                      border: { display: false },
+                      ticks: { color: CHART_COLORS.subtext },
+                    },
+                    y: {
+                      grid: { color: CHART_COLORS.grid },
+                      border: { display: false },
+                      ticks: { color: CHART_COLORS.subtext },
                     },
                   },
                 }}
@@ -566,8 +662,8 @@ export default function AnalyticsPage() {
                     datasets: [
                       {
                         data: customerInsights.newVsReturning.data,
-                        backgroundColor: ["#fbbf24", "#10b981"],
-                        borderColor: ["#f59e0b", "#059669"],
+                        backgroundColor: [CHART_COLORS.primarySoft, CHART_COLORS.primary],
+                        borderColor: [CHART_COLORS.primaryLight, CHART_COLORS.primary],
                         borderWidth: 2,
                       },
                     ],
@@ -576,7 +672,10 @@ export default function AnalyticsPage() {
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                      legend: { position: "bottom" as const },
+                      legend: {
+                        position: "bottom" as const,
+                        labels: { color: CHART_COLORS.text },
+                      },
                     },
                   }}
                 />
@@ -651,8 +750,8 @@ export default function AnalyticsPage() {
                     datasets: [
                       {
                         data: cancellationAnalysis.statusData,
-                        backgroundColor: ["#10b981", "#f59e0b", "#3b82f6", "#ef4444"],
-                        borderColor: ["#059669", "#d97706", "#1e40af", "#dc2626"],
+                        backgroundColor: [CHART_COLORS.primary, CHART_COLORS.amber, CHART_COLORS.blue, CHART_COLORS.red],
+                        borderColor: [CHART_COLORS.primary, "#d97706", "#1e40af", CHART_COLORS.redDark],
                         borderWidth: 2,
                       },
                     ],
@@ -661,7 +760,10 @@ export default function AnalyticsPage() {
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                      legend: { position: "bottom" as const },
+                      legend: {
+                        position: "bottom" as const,
+                        labels: { color: CHART_COLORS.text },
+                      },
                     },
                   }}
                 />
