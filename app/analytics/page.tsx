@@ -365,6 +365,9 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="analytics-container">
+        {/* Background Circles */}
+        <div className="bg-circle-left" />
+        <div className="bg-circle-right" />
         <Navigation currentPage="analytics" />
         <div className="loading-state">
           <div className="spinner"></div>
@@ -375,7 +378,10 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <>
+    <div className="analytics-container">
+      {/* Background Circles */}
+      <div className="bg-circle-left" />
+      <div className="bg-circle-right" />
       <Navigation currentPage="analytics" />
       <PageTransition>
         <div className="main-content">
@@ -843,7 +849,7 @@ export default function AnalyticsPage() {
         .main-content {
           position: relative;
           z-index: 10;
-          padding: 2rem 3.5rem;
+          padding: 1rem 3.5rem 2rem 3.5rem;
           max-width: 1600px;
           margin: 0 auto;
         }
@@ -1348,6 +1354,6 @@ export default function AnalyticsPage() {
           }
         }
       `}</style>
-    </>
+    </div>
   );
 }
