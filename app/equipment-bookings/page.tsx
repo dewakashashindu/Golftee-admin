@@ -53,7 +53,14 @@ interface BookingEquipment {
   equipment: Equipment;
 }
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
+// Support both env var names for flexibility
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+// Normalize API base to avoid double "/api" or extra slashes
+const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
+const buildApiUrl = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE}/api${p}`;
+};
 
 export default function EquipmentBookingsPage() {
   const [bookingEquipment, setBookingEquipment] = useState<BookingEquipment[]>([]);
@@ -77,7 +84,7 @@ export default function EquipmentBookingsPage() {
         throw new Error("API URL not configured. Set NEXT_PUBLIC_API_URL environment variable.");
       }
 
-      const url = `${BACKEND}/booking-equipment`;
+      const url = buildApiUrl('/booking-equipment');
       console.log("Fetching from:", url);
       
       const response = await fetch(url);
@@ -142,7 +149,7 @@ export default function EquipmentBookingsPage() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND}/booking-equipment/${id}`, {
+      const response = await fetch(buildApiUrl(`/booking-equipment/${id}`), {
         method: "DELETE",
       });
 
