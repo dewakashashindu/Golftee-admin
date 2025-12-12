@@ -414,7 +414,13 @@ export default function AnalyticsPage() {
             <h2 className="section-title">Key Performance Indicators</h2>
             <div className="kpi-grid">
               <div className="kpi-card">
-                <div className="kpi-icon">📊</div>
+                <div className="kpi-icon" aria-hidden>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                    <rect x="4" y="11" width="3" height="7" rx="1"></rect>
+                    <rect x="10.5" y="7" width="3" height="11" rx="1"></rect>
+                    <rect x="17" y="14" width="3" height="4" rx="1"></rect>
+                  </svg>
+                </div>
                 <div className="kpi-content">
                   <p className="kpi-label">Total Bookings</p>
                   <p className="kpi-value">{kpiMetrics.totalBookings}</p>
@@ -423,7 +429,12 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="kpi-card">
-                <div className="kpi-icon">💰</div>
+                <div className="kpi-icon" aria-hidden>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V7.5C3 6.12 4.12 5 5.5 5h13c1.38 0 2.5 1.12 2.5 2.5v9c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 19 3 17.88 3 16.5z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 9h6M7 12h10M7 15h8"/>
+                  </svg>
+                </div>
                 <div className="kpi-content">
                   <p className="kpi-label">Total Revenue</p>
                   <p className="kpi-value">${kpiMetrics.totalRevenue}</p>
@@ -432,7 +443,12 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="kpi-card">
-                <div className="kpi-icon">👥</div>
+                <div className="kpi-icon" aria-hidden>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75v-.75z"/>
+                  </svg>
+                </div>
                 <div className="kpi-content">
                   <p className="kpi-label">Active Customers</p>
                   <p className="kpi-value">{kpiMetrics.activePlayers}</p>
@@ -441,7 +457,12 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="kpi-card">
-                <div className="kpi-icon">❌</div>
+                <div className="kpi-icon" aria-hidden>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6"/>
+                  </svg>
+                </div>
                 <div className="kpi-content">
                   <p className="kpi-label">Cancellation Rate</p>
                   <p className="kpi-value">{kpiMetrics.cancellationRate}%</p>
@@ -968,6 +989,7 @@ export default function AnalyticsPage() {
           font-size: 2.5rem;
           min-width: 60px;
           text-align: center;
+          color: #16a34a;
         }
 
         .kpi-content {
