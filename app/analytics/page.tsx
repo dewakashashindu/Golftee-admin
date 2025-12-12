@@ -82,6 +82,12 @@ interface BookingEquipment {
 }
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
+// Normalize API base to avoid double "/api" or extra slashes
+const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
+const buildApiUrl = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE}/api${p}`;
+};
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
@@ -96,8 +102,8 @@ export default function AnalyticsPage() {
       setError(null);
       try {
         const [bookingsRes, equipmentRes] = await Promise.all([
-          fetch(`${BACKEND}/api/bookings`),
-          fetch(`${BACKEND}/booking-equipment`),
+          fetch(buildApiUrl('/bookings')),
+          fetch(buildApiUrl('/booking-equipment')),
         ]);
 
         if (!bookingsRes.ok || !equipmentRes.ok) {
