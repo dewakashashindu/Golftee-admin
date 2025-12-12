@@ -69,19 +69,48 @@ export default function SplashPage() {
         {/* Features Preview */}
         <div className="features-preview">
           <div className="feature-item">
-            <div className="feature-icon">📊</div>
+            <div className="feature-icon" aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                <rect x="4" y="11" width="3" height="7" rx="1"></rect>
+                <rect x="10.5" y="7" width="3" height="11" rx="1"></rect>
+                <rect x="17" y="14" width="3" height="4" rx="1"></rect>
+              </svg>
+            </div>
             <span>Analytics</span>
           </div>
           <div className="feature-item">
-            <div className="feature-icon">📅</div>
+            <div className="feature-icon" aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                <rect x="3" y="5" width="18" height="16" rx="2" ry="2"></rect>
+                <path strokeLinecap="round" d="M8 3v4M16 3v4"></path>
+                <path d="M3 10h18"></path>
+                <rect x="6.5" y="12.5" width="3" height="3" rx="0.5"></rect>
+                <rect x="11.5" y="12.5" width="3" height="3" rx="0.5"></rect>
+                <rect x="16.5" y="12.5" width="3" height="3" rx="0.5"></rect>
+              </svg>
+            </div>
             <span>Bookings</span>
           </div>
           <div className="feature-item">
-            <div className="feature-icon">🏆</div>
+            <div className="feature-icon" aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h8v3a4 4 0 0 0 4 4h0V9a3 3 0 0 0-3-3H8a3 3 0 0 0-3 3v4h0a4 4 0 0 0 4-4V6z" />
+                <path d="M9 18h6" />
+                <path d="M10 21h4" />
+                <path d="M12 6v6" />
+              </svg>
+            </div>
             <span>Tournaments</span>
           </div>
           <div className="feature-item">
-            <div className="feature-icon">👥</div>
+            <div className="feature-icon" aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1" />
+                <circle cx="9" cy="7" r="3" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M23 20v-1a4 4 0 0 0-3-3.87" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a3 3 0 0 1 0 5.74" />
+              </svg>
+            </div>
             <span>Members</span>
           </div>
         </div>
@@ -95,7 +124,7 @@ export default function SplashPage() {
       <style jsx>{`
         .splash-container {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0f7a04 0%, #13a905ff 30%, #16a34a 70%, #22c55e 100%);
+          background: linear-gradient(135deg, #15241aff 0%, #0F7C6D 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -346,6 +375,7 @@ export default function SplashPage() {
         
         .feature-icon {
           font-size: 1.5rem;
+          color: #ffffff;
         }
         
         .feature-item span {
