@@ -264,7 +264,7 @@ export default function EquipmentBookingsPage() {
 
             <div className="filter-group">
               <label>Equipment Type:</label>
-              <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <select value={filterType} onChange={(e) => setFilterType(e.target.value)} title="Filter by equipment type">
                 <option value="all">All Types</option>
                 {equipmentTypes.map((type) => (
                   <option key={type} value={type}>
