@@ -74,11 +74,24 @@ model BookingEquipment {
 }
 
 model Event {
-  id        String   @id @default(cuid())
-  title     String
-  date      String
-  description String?
-  createdAt DateTime @default(now())
+  id                  String   @id @default(cuid())
+  name                String   // Tournament/Event name
+  type                String   @default("tournament") // tournament or event
+  date                String
+  time                String
+  location            String
+  format              String?  // e.g. "Stroke Play", "Match Play"
+  description         String?
+  registrationDeadline String?
+  maxParticipants     Int      @default(50)
+  entryFee            String   @default("0")
+  prizePool           String?  // For tournaments
+  poster              String?  // Image URL or base64
+  status              String   @default("upcoming") // upcoming, ongoing, completed, cancelled
+  participants        String[] @default([]) // Array of participant IDs or names
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime? // Soft delete
 }
 
 model Notification {

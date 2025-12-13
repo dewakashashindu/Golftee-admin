@@ -1,139 +1,293 @@
 
 "use client";
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
+import { EventItem } from "@/lib/types/event";
+import { supabase } from "@/lib/supabase";
 
-interface Tournament {
+// Backend compatibility interface
+interface Event {
   id: string;
   name: string;
+  type: "tournament" | "event";
   date: string;
   time: string;
-  format: string;
-  description: string;
   location: string;
+  format?: string;
+  description?: string;
+  registrationDeadline?: string;
   maxParticipants: number;
   entryFee: string;
-  prizePool: string;
-  poster: string;
-  participants: string[];
+  prizePool?: string;
+  poster?: string;
+  status: "upcoming" | "ongoing" | "completed" | "cancelled";
+  participants?: string[];
 }
 
-const initialTournaments: Tournament[] = [
-  {
-    id: "1",
-    name: "Spring Open",
-    date: "2025-04-15",
-    time: "09:00",
-    format: "Stroke Play",
-    description: "Annual spring tournament for all members.",
-    location: "Main Golf Course",
-    maxParticipants: 50,
-    entryFee: "$25",
-    prizePool: "$500",
-    poster: "",
-    participants: [],
-  },
-];
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
+const buildApiUrl = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE}/api${p}`;
+};
 
 export default function EventsPage() {
-  const [tournaments, setTournaments] = useState<Tournament[]>(initialTournaments);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [showProfileCard, setShowProfileCard] = useState(false);
-  const [showNotificationCard, setShowNotificationCard] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    date: "",
-    time: "",
-    format: "",
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [form, setForm] = useState<EventItem>({
+    type: "TOURNAMENT",
+    title: "",
     description: "",
+    start_date: "",
+    start_time: "09:00",
     location: "",
-    maxParticipants: "",
-    entryFee: "",
-    prizePool: "",
-    poster: "",
+    registration_deadline: "",
+    max_participants: 50,
+    entry_fee: 0,
+    prize_pool: 0,
+    format: "",
+    status: "upcoming",
+    poster_url: ""
   });
 
-  function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(buildApiUrl('/events'));
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setEvents(result.data);
+      } else {
+        setError('Failed to load events');
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Failed to connect to server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { name, value, type } = e.target;
+    if (type === 'number') {
+      setForm({ ...form, [name]: Number(value) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  }
+
+  async function uploadPoster(file: File): Promise<string> {
+    const fileName = `${Date.now()}-${file.name}`;
+
+    const { data, error } = await supabase.storage
+      .from("event-posters")
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    return supabase.storage
+      .from("event-posters")
+      .getPublicUrl(fileName).data.publicUrl;
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setForm({ ...form, poster: event.target.result as string });
-        }
-      };
-      reader.readAsDataURL(file);
+      setPosterFile(file);
+      
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setForm({ ...form, poster_url: previewUrl });
     }
   }
 
-  function handleCreateTournament(e: React.FormEvent) {
+  async function handleCreateEvent(e: React.FormEvent) {
     e.preventDefault();
-    if (editingId) {
-      // Update existing tournament
-      const updatedTournaments = tournaments.map(t => 
-        t.id === editingId 
-          ? { ...t, name: form.name, date: form.date, format: form.format, description: form.description, poster: form.poster }
-          : t
-      );
-      setTournaments(updatedTournaments);
-      setEditingId(null);
-    } else {
-      // Create new tournament
-      const newTournament: Tournament = {
-        id: (tournaments.length + 1).toString(),
-        name: form.name,
-        date: form.date,
-        time: form.time,
-        format: form.format,
-        description: form.description,
+    setLoading(true);
+    setError(null);
+  
+    try {
+      // Validation: Registration deadline must be before event date
+      if (form.registration_deadline >= form.start_date) {
+        alert("Registration deadline must be before event date");
+        setLoading(false);
+        return;
+      }
+
+      // Upload poster if a new file is selected
+      let posterUrl = form.poster_url;
+      if (posterFile) {
+        try {
+          posterUrl = await uploadPoster(posterFile);
+          setInfoMessage('Poster uploaded successfully!');
+        } catch (uploadErr) {
+          console.error('Poster upload error:', uploadErr);
+          setError('Failed to upload poster. Saving event without poster.');
+          posterUrl = null;
+        }
+      }
+
+      // Map EventItem fields to backend Event fields
+      const payload: any = {
+        name: form.title,
+        type: form.type.toLowerCase() as "tournament" | "event",
+        date: form.start_date,
+        time: form.start_time,
         location: form.location,
-        maxParticipants: parseInt(form.maxParticipants) || 0,
-        entryFee: form.entryFee,
-        prizePool: form.prizePool,
-        poster: form.poster,
-        participants: [],
+        format: form.format || "",
+        description: form.description || "",
+        registrationDeadline: form.registration_deadline || "",
+        maxParticipants: form.max_participants,
+        entryFee: `$${form.entry_fee}`,
+        prizePool: form.prize_pool ? `$${form.prize_pool}` : "$0",
+        status: form.status
       };
-      setTournaments([...tournaments, newTournament]);
+
+      // Only include poster if we have a URL
+      if (posterUrl) {
+        payload.poster = posterUrl;
+      }
+
+      const url = editingId ? buildApiUrl(`/events/${editingId}`) : buildApiUrl('/events');
+      const method = editingId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInfoMessage(editingId ? 'Event updated successfully' : 'Event created successfully');
+        fetchEvents();
+        setForm({
+          type: "TOURNAMENT",
+          title: "",
+          description: "",
+          start_date: "",
+          start_time: "09:00",
+          location: "",
+          registration_deadline: "",
+          max_participants: 50,
+          entry_fee: 0,
+          prize_pool: 0,
+          format: "",
+          status: "upcoming",
+          poster_url: ""
+        });
+        setPosterFile(null);
+        setEditingId(null);
+        setShowForm(false);
+        setTimeout(() => setInfoMessage(null), 3000);
+      } else {
+        setError(result.error || 'Failed to save event');
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      setError('Failed to save event');
+    } finally {
+      setLoading(false);
     }
-    setForm({ name: "", date: "", time: "", format: "", description: "", location: "", maxParticipants: "", entryFee: "", prizePool: "", poster: "" });
-    setShowForm(false);
   }
 
-  function handleEditTournament(tournament: Tournament) {
+  function handleEditEvent(event: Event) {
     setForm({
-      name: tournament.name,
-      date: tournament.date,
-      time: tournament.time,
-      format: tournament.format,
-      description: tournament.description,
-      location: tournament.location,
-      maxParticipants: tournament.maxParticipants.toString(),
-      entryFee: tournament.entryFee,
-      prizePool: tournament.prizePool,
-      poster: tournament.poster,
+      type: event.type.toUpperCase() as "EVENT" | "TOURNAMENT",
+      title: event.name,
+      description: event.description || "",
+      start_date: event.date,
+      start_time: event.time,
+      location: event.location,
+      registration_deadline: event.registrationDeadline || "",
+      max_participants: event.maxParticipants,
+      entry_fee: parseFloat(event.entryFee.replace(/[^0-9.]/g, '')) || 0,
+      prize_pool: event.prizePool ? parseFloat(event.prizePool.replace(/[^0-9.]/g, '')) : 0,
+      format: event.format || "",
+      status: event.status,
+      poster_url: event.poster || ""
     });
-    setEditingId(tournament.id);
+    setEditingId(event.id);
     setShowForm(true);
   }
 
-  function handleDeleteTournament(id: string) {
-    if (confirm("Are you sure you want to delete this tournament?")) {
-      setTournaments(tournaments.filter(t => t.id !== id));
+  async function handleDeleteEvent(id: string) {
+    if (!confirm("Are you sure you want to cancel this event?")) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Update status to cancelled instead of deleting
+      // This implements soft delete with status lifecycle
+      // ✅ Never delete, always change status
+      const response = await fetch(buildApiUrl(`/events/${id}`), {
+        method: "PUT",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: "cancelled" })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInfoMessage("Event cancelled successfully");
+        fetchEvents();
+        setTimeout(() => setInfoMessage(null), 3000);
+      } else {
+        setError(result.error || "Failed to cancel event");
+      }
+    } catch (err) {
+      console.error("Cancel event error:", err);
+      setError("Failed to cancel event");
+    } finally {
+      setLoading(false);
     }
   }
 
   function handleCancelEdit() {
-    setForm({ name: "", date: "", time: "", format: "", description: "", location: "", maxParticipants: "", entryFee: "", prizePool: "", poster: "" });
+    setForm({
+      type: "TOURNAMENT",
+      title: "",
+      description: "",
+      start_date: "",
+      start_time: "09:00",
+      location: "",
+      registration_deadline: "",
+      max_participants: 50,
+      entry_fee: 0,
+      prize_pool: 0,
+      format: "",
+      status: "upcoming",
+      poster_url: ""
+    });
+    setPosterFile(null);
     setEditingId(null);
     setShowForm(false);
   }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'upcoming': return '#3b82f6';
+      case 'ongoing': return '#f59e0b';
+      case 'completed': return '#10b981';
+      case 'cancelled': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
 
   return (
     <>
@@ -193,6 +347,25 @@ export default function EventsPage() {
             position: 'relative',
             textShadow: '0 4px 8px rgba(0,0,0,0.1)'
           }}>Tournaments & Events</h1>
+
+          {error && <div style={{
+            background: '#fef2f2',
+            border: '2px solid #fecaca',
+            color: '#dc2626',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1rem'
+          }}>{error}</div>}
+
+          {infoMessage && <div style={{
+            background: '#f0fdf4',
+            border: '2px solid #bbf7d0',
+            color: '#16a34a',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1rem'
+          }}>{infoMessage}</div>}
+
           <button 
             style={{
               background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #059669 100%)',
@@ -213,8 +386,9 @@ export default function EventsPage() {
               overflow: 'hidden'
             }}
             onClick={() => setShowForm(true)}
+            disabled={loading}
           >
-            {editingId ? "Edit Tournament" : "Create Tournament"}
+            {editingId ? "Edit Event" : "Create Event/Tournament"}
           </button>
           {showForm && (
             <form 
@@ -229,53 +403,75 @@ export default function EventsPage() {
                 backdropFilter: 'blur(5px)',
                 border: '1px solid rgba(22, 163, 74, 0.1)'
               }}
-              onSubmit={handleCreateTournament}
+              onSubmit={handleCreateEvent}
             >
-              <input
-                name="name"
-                placeholder="Tournament Name"
-                value={form.name}
-                onChange={handleInput}
-                required
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
-              <input
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleInput}
-                required
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
-              <input
-                name="time"
-                type="time"
-                value={form.time}
-                onChange={handleInput}
-                required
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <input
+                  name="title"
+                  placeholder="Event/Tournament Name *"
+                  value={form.title}
+                  onChange={handleInput}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: '2px solid rgba(22, 163, 74, 0.2)',
+                    background: 'rgba(255,255,255,0.9)',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+                <select
+                  name="type"
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as "EVENT" | "TOURNAMENT" })}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: '2px solid rgba(22, 163, 74, 0.2)',
+                    background: 'rgba(255,255,255,0.9)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <option value="EVENT">Event</option>
+                  <option value="TOURNAMENT">Tournament</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <input
+                  name="start_date"
+                  type="date"
+                  value={form.start_date}
+                  onChange={handleInput}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: '2px solid rgba(22, 163, 74, 0.2)',
+                    background: 'rgba(255,255,255,0.9)',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+                <input
+                  name="start_time"
+                  type="time"
+                  value={form.start_time}
+                  onChange={handleInput}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: '2px solid rgba(22, 163, 74, 0.2)',
+                    background: 'rgba(255,255,255,0.9)',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+              </div>
+
               <input
                 name="location"
-                placeholder="Location (e.g. Main Golf Course)"
+                placeholder="Location (e.g. Main Golf Course) *"
                 value={form.location}
                 onChange={handleInput}
                 required
@@ -287,70 +483,12 @@ export default function EventsPage() {
                   transition: 'all 0.3s ease'
                 }}
               />
-              <input
-                name="format"
-                placeholder="Format (e.g. Stroke Play)"
-                value={form.format}
-                onChange={handleInput}
-                required
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
-              <input
-                name="maxParticipants"
-                type="number"
-                placeholder="Maximum Participants"
-                value={form.maxParticipants}
-                onChange={handleInput}
-                required
-                min="1"
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
-              <input
-                name="entryFee"
-                placeholder="Entry Fee (e.g. $25)"
-                value={form.entryFee}
-                onChange={handleInput}
-                required
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
-              <input
-                name="prizePool"
-                placeholder="Prize Pool (e.g. $500)"
-                value={form.prizePool}
-                onChange={handleInput}
-                required
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(22, 163, 74, 0.2)',
-                  background: 'rgba(255,255,255,0.9)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
+
               <textarea
                 name="description"
                 placeholder="Description"
                 value={form.description}
                 onChange={handleInput}
-                required
                 style={{
                   padding: '0.8rem',
                   borderRadius: '10px',
@@ -361,6 +499,111 @@ export default function EventsPage() {
                   resize: 'vertical'
                 }}
               />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <input
+                  name="registration_deadline"
+                  type="date"
+                  placeholder="Registration Deadline *"
+                  value={form.registration_deadline}
+                  onChange={handleInput}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: '2px solid rgba(22, 163, 74, 0.2)',
+                    background: 'rgba(255,255,255,0.9)',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+                <input
+                  name="max_participants"
+                  type="number"
+                  placeholder="Maximum Participants *"
+                  value={form.max_participants}
+                  onChange={handleInput}
+                  required
+                  min="1"
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '10px',
+                    border: '2px solid rgba(22, 163, 74, 0.2)',
+                    background: 'rgba(255,255,255,0.9)',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+              </div>
+
+              <input
+                name="entry_fee"
+                type="number"
+                placeholder="Entry Fee (in dollars) *"
+                value={form.entry_fee}
+                onChange={handleInput}
+                required
+                min="0"
+                step="0.01"
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+
+              {form.type === "TOURNAMENT" && (
+                <>
+                  <input
+                    name="format"
+                    placeholder="Format (e.g. Stroke Play, Match Play)"
+                    value={form.format}
+                    onChange={handleInput}
+                    style={{
+                      padding: '0.8rem',
+                      borderRadius: '10px',
+                      border: '2px solid rgba(22, 163, 74, 0.2)',
+                      background: 'rgba(255,255,255,0.9)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                  <input
+                    name="prize_pool"
+                    type="number"
+                    placeholder="Prize Pool (in dollars)"
+                    value={form.prize_pool}
+                    onChange={handleInput}
+                    min="0"
+                    step="0.01"
+                    style={{
+                      padding: '0.8rem',
+                      borderRadius: '10px',
+                      border: '2px solid rgba(22, 163, 74, 0.2)',
+                      background: 'rgba(255,255,255,0.9)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                </>
+              )}
+
+              <select
+                name="status"
+                value={form.status}
+                onChange={handleInput}
+                required
+                style={{
+                  padding: '0.8rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(22, 163, 74, 0.2)',
+                  background: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -372,7 +615,7 @@ export default function EventsPage() {
                 }}>Event Poster:</label>
                 <input
                   id="poster"
-                  name="poster"
+                  name="poster_url"
                   type="file"
                   accept="image/*"
                   onChange={handleFileInput}
@@ -383,10 +626,10 @@ export default function EventsPage() {
                     background: 'white'
                   }}
                 />
-                {form.poster && (
+                {form.poster_url && (
                   <div style={{ marginTop: '0.5rem' }}>
                     <img 
-                      src={form.poster} 
+                      src={form.poster_url} 
                       alt="Poster preview" 
                       style={{
                         maxWidth: '200px',
@@ -412,7 +655,7 @@ export default function EventsPage() {
                   transition: 'all 0.3s ease'
                 }}
               >
-                {editingId ? "Update Tournament" : "Add Tournament"}
+                {editingId ? "Update Event" : "Create Event"}
               </button>
               <button 
                 type="button" 
@@ -434,35 +677,70 @@ export default function EventsPage() {
             </form>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {tournaments.map((t) => (
-              <div key={t.id} style={{
-                background: 'linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
-                borderRadius: '20px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-                padding: '2rem',
-                border: '1px solid rgba(16, 185, 129, 0.15)',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  content: '',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '4px',
-                  background: 'linear-gradient(90deg, #059669, #16a34a, #22c55e)'
-                }} />
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <h2 style={{
-                      fontSize: '1.8rem',
-                      fontWeight: '700',
-                      color: '#059669',
-                      marginBottom: '1rem',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}>{t.name}</h2>
+            {loading && events.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                Loading events...
+              </div>
+            ) : events.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                No events found. Create your first event!
+              </div>
+            ) : (
+              events.map((event) => (
+                <div key={event.id} style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
+                  borderRadius: '20px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                  padding: '2rem',
+                  border: '1px solid rgba(16, 185, 129, 0.15)',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    content: '',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '4px',
+                    background: `linear-gradient(90deg, ${getStatusColor(event.status)}, ${getStatusColor(event.status)}AA)`
+                  }} />
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h2 style={{
+                          fontSize: '1.8rem',
+                          fontWeight: '700',
+                          color: '#059669',
+                          margin: 0,
+                          textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}>{event.name}</h2>
+                        <span style={{
+                          background: getStatusColor(event.status),
+                          color: 'white',
+                          padding: '0.4rem 1rem',
+                          borderRadius: '20px',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          textTransform: 'uppercase'
+                        }}>
+                          {event.status}
+                        </span>
+                      </div>
+                      
+                      <span style={{
+                        display: 'inline-block',
+                        background: event.type === 'tournament' ? '#f0f9ff' : '#fef3c7',
+                        color: event.type === 'tournament' ? '#0369a1' : '#92400e',
+                        padding: '0.3rem 0.8rem',
+                        borderRadius: '12px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        marginBottom: '1rem'
+                      }}>
+                        {event.type === 'tournament' ? '🏆 Tournament' : '📅 Event'}
+                      </span>
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr 1fr',
@@ -485,91 +763,50 @@ export default function EventsPage() {
                         padding: '0.5rem',
                         borderRadius: '8px',
                         transition: 'all 0.2s ease'
-                      }}><strong>📅 Date:</strong> {t.date}</p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease'
-                      }}><strong>🕐 Time:</strong> {t.time}</p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease'
-                      }}><strong>📍 Location:</strong> {t.location}</p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease'
-                      }}><strong>🏌️ Format:</strong> {t.format}</p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease'
-                      }}><strong>👥 Max Participants:</strong> {t.maxParticipants}</p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease'
-                      }}><strong>💰 Entry Fee:</strong> {t.entryFee}</p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease'
-                      }}><strong>🏆 Prize Pool:</strong> {t.prizePool}</p>
+                      }}><strong>📅 Date:</strong> {event.date}</p>
+                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <strong>🕐 Time:</strong> {event.time}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <strong>📍 Location:</strong> {event.location}
+                      </p>
+                      {event.format && (
+                        <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                          <strong>🏌️ Format:</strong> {event.format}
+                        </p>
+                      )}
+                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <strong>👥 Max Participants:</strong> {event.maxParticipants}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <strong>💰 Entry Fee:</strong> {event.entryFee}
+                      </p>
+                      {event.prizePool && (
+                        <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                          <strong>🏆 Prize Pool:</strong> {event.prizePool}
+                        </p>
+                      )}
+                      {event.registrationDeadline && (
+                        <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                          <strong>⏰ Reg. Deadline:</strong> {event.registrationDeadline}
+                        </p>
+                      )}
                     </div>
-                    <p style={{
-                      fontStyle: 'italic',
-                      color: '#4b5563',
-                      margin: '1.5rem 0',
-                      padding: '1.25rem',
-                      background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.9), rgba(243, 244, 246, 0.7))',
-                      borderRadius: '12px',
-                      borderLeft: '4px solid #10b981',
-                      fontSize: '1.05rem',
-                      lineHeight: '1.6'
-                    }}>{t.description}</p>
+                    
+                    {event.description && (
+                      <p style={{
+                        fontStyle: 'italic',
+                        color: '#4b5563',
+                        margin: '1.5rem 0',
+                        padding: '1.25rem',
+                        background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.9), rgba(243, 244, 246, 0.7))',
+                        borderRadius: '12px',
+                        borderLeft: '4px solid #10b981',
+                        fontSize: '1.05rem',
+                        lineHeight: '1.6'
+                      }}>{event.description}</p>
+                    )}
+                    
                     <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
                       <button 
                         style={{
@@ -586,7 +823,8 @@ export default function EventsPage() {
                           color: 'white',
                           boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
                         }}
-                        onClick={() => handleEditTournament(t)}
+                        onClick={() => handleEditEvent(event)}
+                        disabled={loading}
                       >
                         Edit
                       </button>
@@ -605,17 +843,18 @@ export default function EventsPage() {
                           color: 'white',
                           boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
                         }}
-                        onClick={() => handleDeleteTournament(t.id)}
+                        onClick={() => handleDeleteEvent(event.id)}
+                        disabled={loading}
                       >
-                        Delete
+                        Cancel Event
                       </button>
                     </div>
                   </div>
-                  {t.poster && (
+                  {event.poster && (
                     <div style={{ flexShrink: 0, width: '150px' }}>
                       <img 
-                        src={t.poster} 
-                        alt={`${t.name} poster`} 
+                        src={event.poster} 
+                        alt={`${event.name} poster`} 
                         style={{
                           width: '100%',
                           height: 'auto',
@@ -627,7 +866,8 @@ export default function EventsPage() {
                   )}
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

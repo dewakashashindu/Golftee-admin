@@ -16,6 +16,12 @@ interface Equipment {
 }
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
+// Normalize API base to avoid double "/api" or trailing slashes
+const API_BASE = BACKEND.replace(/\/+$|\/api$/g, "");
+const buildApiUrl = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE}/api${p}`;
+};
 
 export default function EquipmentPage() {
   // UI state
@@ -57,7 +63,7 @@ export default function EquipmentPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${BACKEND}/equipment`);
+      const response = await fetch(buildApiUrl('/equipment'));
       const result = await response.json();
       
       if (result.success && result.data) {
@@ -104,7 +110,7 @@ export default function EquipmentPage() {
         rentalPrice: form.rentalPrice.replace('$', '').replace('/day', '').trim()
       };
 
-      const url = editingId ? `${BACKEND}/equipment/${editingId}` : `${BACKEND}/equipment`;
+      const url = editingId ? buildApiUrl(`/equipment/${editingId}`) : buildApiUrl('/equipment');
       const method = editingId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -157,7 +163,7 @@ export default function EquipmentPage() {
     setError(null);
     
     try {
-      const response = await fetch(`${BACKEND}/equipment/${id}`, {
+      const response = await fetch(buildApiUrl(`/equipment/${id}`), {
         method: "DELETE"
       });
 

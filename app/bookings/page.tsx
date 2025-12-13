@@ -4,6 +4,15 @@ import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
 
+// Support both env var names for flexibility
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+// Normalize API base to avoid double "/api" or extra slashes
+const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
+const buildApiUrl = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE}/api${p}`;
+};
+
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +28,7 @@ export default function BookingsPage() {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      const response = await fetch(`${apiUrl}/bookings/${bookingId}/cancel`, {
+      const response = await fetch(buildApiUrl(`/bookings/${bookingId}/cancel`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
       });
@@ -48,8 +56,7 @@ export default function BookingsPage() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-    if (!apiUrl) {
+    if (!BACKEND) {
       setError("NEXT_PUBLIC_API_URL is not set");
       setLoading(false);
       return () => {
@@ -57,7 +64,7 @@ export default function BookingsPage() {
       };
     }
 
-    fetch(`${apiUrl}/bookings`)
+    fetch(buildApiUrl('/bookings'))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -65,7 +72,9 @@ export default function BookingsPage() {
       .then((data) => {
         if (!mounted) return;
         console.log("Fetched bookings data:", data);
-        const list = Array.isArray(data) ? data : data?.bookings || [];
+        const list = Array.isArray(data)
+          ? data
+          : (data?.data || data?.bookings || []);
         console.log("Parsed bookings list:", list);
         
         // Helper to treat empty strings as missing
