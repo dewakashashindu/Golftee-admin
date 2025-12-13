@@ -101,10 +101,17 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
       try {
+        const bookingsUrl = buildApiUrl('/bookings');
+        const equipmentUrl = buildApiUrl('/booking-equipment');
+        
+        console.log('Fetching from:', bookingsUrl, equipmentUrl);
+        
         const [bookingsRes, equipmentRes] = await Promise.all([
-          fetch(buildApiUrl('/bookings')),
-          fetch(buildApiUrl('/booking-equipment')),
+          fetch(bookingsUrl),
+          fetch(equipmentUrl),
         ]);
+
+        console.log('Response status:', bookingsRes.status, equipmentRes.status);
 
         if (!bookingsRes.ok || !equipmentRes.ok) {
           throw new Error("Failed to fetch data");
@@ -113,8 +120,16 @@ export default function AnalyticsPage() {
         const bookingsData = await bookingsRes.json();
         const equipmentData = await equipmentRes.json();
 
-        setBookings(bookingsData.success ? bookingsData.data : []);
-        setBookingEquipment(equipmentData.success ? equipmentData.data : []);
+        console.log('Bookings data:', bookingsData);
+        console.log('Equipment data:', equipmentData);
+
+        const bookingsArray = bookingsData.success ? bookingsData.data : (bookingsData.bookings || []);
+        const equipmentArray = equipmentData.success ? equipmentData.data : (equipmentData.data || []);
+
+        console.log('Setting bookings:', bookingsArray.length, 'equipment:', equipmentArray.length);
+
+        setBookings(bookingsArray);
+        setBookingEquipment(equipmentArray);
       } catch (err: any) {
         console.error("Error fetching analytics data:", err);
         setError(err.message);

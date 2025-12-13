@@ -82,7 +82,21 @@ const bookingSchema = z.object({
 });
 
 const eventSchema = z.object({
-  body: z.object({ title: z.string().min(1), date: z.string().min(4), description: z.string().optional() })
+  body: z.object({ 
+    name: z.string().min(1), 
+    type: z.enum(['tournament', 'event']).optional(),
+    date: z.string().min(4), 
+    time: z.string().optional(),
+    location: z.string().optional(),
+    format: z.string().optional(),
+    description: z.string().optional(),
+    registrationDeadline: z.string().optional(),
+    maxParticipants: z.number().int().positive().optional(),
+    entryFee: z.string().optional(),
+    prizePool: z.string().optional(),
+    poster: z.string().optional(),
+    status: z.enum(['upcoming', 'ongoing', 'completed', 'cancelled']).optional()
+  })
 });
 
 const adminBookingSchema = z.object({ row: z.record(z.any()) });
@@ -224,35 +238,62 @@ app.get('/api/bookings', async (req, res) => {
         const user = userMap.get(booking.user_id);
         return {
           id: booking.id,
+          name: booking.court_name?.replace(/_/g, ' ') || 'N/A',
           fullName: user?.name || 'N/A',
           phoneNo: user?.phoneNumber || 'N/A',
           courseName: booking.court_name?.replace(/_/g, ' ') || 'N/A',
           date: booking.date,
           startTime: booking.time,
+          start_time: booking.time,
           endTime: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
+          end_time: calculateEndTime(booking.date, booking.time, booking.duration_minutes),
           noPlayers: booking.players_count || 0,
           nonPlayers: booking.non_players_count || 0,
+          members: (booking.players_count || 0) + (booking.non_players_count || 0),
+          email: user?.email || 'N/A',
+          phone: user?.phoneNumber || 'N/A',
           paymentStatus: booking.payment_status || 'UNPAID',
+          status: booking.status || 'pending',
           bookingStatus: booking.status?.toUpperCase() || 'PENDING',
           createdAt: booking.created_at,
+          created_at: booking.created_at,
         };
       });
       
-      return res.json({ bookings: transformed });
+      return res.json({ success: true, data: transformed });
     } catch (err) {
       console.error('Bookings error:', err);
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
   if (prisma) {
     try {
-      const data = await prisma.booking.findMany({ orderBy: { createdAt: 'desc' } });
-      return res.json({ bookings: data });
+      const data = await prisma.booking.findMany({ 
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: { id: true, username: true, email: true }
+          }
+        }
+      });
+      
+      // Transform Prisma data to include all needed fields
+      const transformed = data.map(booking => ({
+        ...booking,
+        name: booking.name || booking.fullName || 'N/A',
+        email: booking.email || booking.user?.email || 'N/A',
+        phone: booking.phoneNo || 'N/A',
+        start_time: booking.startTime,
+        end_time: booking.endTime,
+        created_at: booking.createdAt
+      }));
+      
+      return res.json({ success: true, data: transformed });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
-  return res.json({ bookings });
+  return res.json({ success: true, data: bookings });
 });
 
 // Helper function to calculate end time; returns HH:MM formatted string
@@ -443,13 +484,18 @@ app.put('/api/bookings/:id/cancel', async (req, res) => {
   res.json({ message: 'Booking cancelled', data: bookings[bookingIndex] });
 });
 
-// Events
+// Events / Tournaments
 app.get('/api/events', async (req, res) => {
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('events').select('*').order('date', { ascending: false });
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: false });
       if (error) return res.status(500).json({ error: error.message });
-      return res.json({ events: data });
+      // Filter out soft-deleted items if the column exists
+      const filtered = (data || []).filter(item => !item.deletedAt);
+      return res.json({ success: true, data: filtered });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -457,25 +503,47 @@ app.get('/api/events', async (req, res) => {
 
   if (prisma) {
     try {
-      const data = await prisma.event.findMany({ orderBy: { date: 'desc' } });
-      return res.json({ events: data });
+      const data = await prisma.event.findMany({ 
+        where: { deletedAt: null },
+        orderBy: { date: 'desc' }
+      });
+      return res.json({ success: true, data });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
 
-  res.json({ events });
+  res.json({ success: true, data: events });
 });
 
 app.post('/api/events', validate(eventSchema), async (req, res) => {
-  const { title, date, description } = req.body;
-  if (!title || !date) return res.status(400).json({ error: 'title and date required' });
+  const { 
+    name, type, date, time, location, format, description, 
+    registrationDeadline, maxParticipants, entryFee, prizePool, poster, status 
+  } = req.body;
+  
+  if (!name || !date) return res.status(400).json({ error: 'name and date required' });
 
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('events').insert([{ title, date, description: description || '' }]).select().single();
+      const { data, error } = await supabase.from('events').insert([{
+        name,
+        type: type || 'tournament',
+        date,
+        time: time || '09:00',
+        location: location || '',
+        format: format || '',
+        description: description || '',
+        registrationDeadline: registrationDeadline || null,
+        maxParticipants: maxParticipants || 50,
+        entryFee: entryFee || '0',
+        prizePool: prizePool || null,
+        poster: poster || null,
+        status: status || 'upcoming',
+        participants: []
+      }]).select().single();
       if (error) return res.status(500).json({ error: error.message });
-      return res.status(201).json({ event: data });
+      return res.status(201).json({ success: true, data });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -483,16 +551,158 @@ app.post('/api/events', validate(eventSchema), async (req, res) => {
 
   if (prisma) {
     try {
-      const created = await prisma.event.create({ data: { title, date, description: description || '' } });
-      return res.status(201).json({ event: created });
+      const created = await prisma.event.create({ 
+        data: { 
+          name,
+          type: type || 'tournament',
+          date,
+          time: time || '09:00',
+          location: location || '',
+          format: format || '',
+          description: description || '',
+          registrationDeadline: registrationDeadline || null,
+          maxParticipants: maxParticipants || 50,
+          entryFee: entryFee || '0',
+          prizePool: prizePool || null,
+          poster: poster || null,
+          status: status || 'upcoming',
+          participants: []
+        } 
+      });
+      return res.status(201).json({ success: true, data: created });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
 
-  const ev = { id: makeId('e_'), title, date, description: description || '', createdAt: new Date().toISOString() };
+  const ev = { 
+    id: makeId('e_'), 
+    name, 
+    type: type || 'tournament',
+    date, 
+    time: time || '09:00',
+    location: location || '',
+    format: format || '',
+    description: description || '', 
+    registrationDeadline: registrationDeadline || null,
+    maxParticipants: maxParticipants || 50,
+    entryFee: entryFee || '0',
+    prizePool: prizePool || null,
+    poster: poster || null,
+    status: status || 'upcoming',
+    participants: [],
+    createdAt: new Date().toISOString() 
+  };
   events.push(ev);
-  res.status(201).json({ event: ev });
+  res.status(201).json({ success: true, data: ev });
+});
+
+app.put('/api/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      name, type, date, time, location, format, description, 
+      registrationDeadline, maxParticipants, entryFee, prizePool, poster, status 
+    } = req.body;
+
+    if (supabase) {
+      const updateData = {};
+      if (name !== undefined) updateData.name = name;
+      if (type !== undefined) updateData.type = type;
+      if (date !== undefined) updateData.date = date;
+      if (time !== undefined) updateData.time = time;
+      if (location !== undefined) updateData.location = location;
+      if (format !== undefined) updateData.format = format;
+      if (description !== undefined) updateData.description = description;
+      if (registrationDeadline !== undefined) updateData.registrationDeadline = registrationDeadline;
+      if (maxParticipants !== undefined) updateData.maxParticipants = maxParticipants;
+      if (entryFee !== undefined) updateData.entryFee = entryFee;
+      if (prizePool !== undefined) updateData.prizePool = prizePool;
+      if (poster !== undefined) updateData.poster = poster;
+      if (status !== undefined) updateData.status = status;
+
+      const { data, error } = await supabase
+        .from('events')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.json({ success: true, data });
+    }
+
+    if (prisma) {
+      const updated = await prisma.event.update({
+        where: { id },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(type !== undefined && { type }),
+          ...(date !== undefined && { date }),
+          ...(time !== undefined && { time }),
+          ...(location !== undefined && { location }),
+          ...(format !== undefined && { format }),
+          ...(description !== undefined && { description }),
+          ...(registrationDeadline !== undefined && { registrationDeadline }),
+          ...(maxParticipants !== undefined && { maxParticipants }),
+          ...(entryFee !== undefined && { entryFee }),
+          ...(prizePool !== undefined && { prizePool }),
+          ...(poster !== undefined && { poster }),
+          ...(status !== undefined && { status })
+        }
+      });
+      return res.json({ success: true, data: updated });
+    }
+
+    return res.json({ success: true, message: 'Event updated' });
+  } catch (err) {
+    console.error('Event PUT error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (supabase) {
+      // Soft delete if column exists, otherwise update status
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .update({ deletedAt: new Date().toISOString(), status: 'cancelled' })
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return res.json({ success: true, data });
+      } catch (err) {
+        // Fall back to status update if deletedAt doesn't exist
+        const { data, error } = await supabase
+          .from('events')
+          .update({ status: 'cancelled' })
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return res.json({ success: true, data });
+      }
+    }
+
+    if (prisma) {
+      // Soft delete
+      const updated = await prisma.event.update({
+        where: { id },
+        data: { deletedAt: new Date() }
+      });
+      return res.json({ success: true, data: updated });
+    }
+
+    return res.json({ success: true, message: 'Event deleted' });
+  } catch (err) {
+    console.error('Event DELETE error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Notifications
