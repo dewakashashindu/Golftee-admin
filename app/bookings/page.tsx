@@ -72,7 +72,9 @@ export default function BookingsPage() {
       .then((data) => {
         if (!mounted) return;
         console.log("Fetched bookings data:", data);
-        const list = Array.isArray(data) ? data : data?.bookings || [];
+        const list = Array.isArray(data)
+          ? data
+          : (data?.data || data?.bookings || []);
         console.log("Parsed bookings list:", list);
         
         // Helper to treat empty strings as missing
