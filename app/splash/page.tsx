@@ -7,14 +7,14 @@ export default function SplashPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate loading time and then redirect to home
+    // Simulate loading time and then redirect to login/signup
     const timer = setTimeout(() => {
       setIsLoading(false);
-      // Auto redirect to home page after 1 second
+      // Auto redirect to login page after 1 second
       setTimeout(() => {
         // Mark that user has seen splash page
         sessionStorage.setItem('hasSeenSplash', 'true');
-        router.push('/home');
+        router.push('/login');
       }, 1000);
     }, 2500);
 

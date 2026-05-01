@@ -1,16 +1,30 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { setAuthToken, setStoredUser } from "@/lib/auth";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('tt_token', 'mock-token');
-    localStorage.setItem('tt_user', JSON.stringify({ username }));
-    window.location.href = '/home';
+    
+    // Generate a mock token
+    const token = 'mock-token-' + Date.now();
+    
+    // Set auth token and user data
+    setAuthToken(token);
+    setStoredUser({ 
+      username,
+      email: `${username}@golftee.com`,
+      name: 'Royal Colombo'
+    });
+    
+    // Redirect to home (dashboard)
+    router.push('/home');
   };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { setAuthToken, setStoredUser } from "@/lib/auth";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -14,9 +15,21 @@ export default function SignupPage() {
       alert("Passwords do not match");
       return;
     }
-    localStorage.setItem('tt_user', JSON.stringify({ email }));
-    alert('Signup successful — local mock account created');
-    router.push('/login');
+    
+    // Generate a mock token
+    const token = 'mock-token-' + Date.now();
+    
+    // Set auth token and user data
+    setAuthToken(token);
+    setStoredUser({ 
+      email,
+      name: 'Royal Colombo',
+      phone: '0775698201'
+    });
+    
+    alert('Signup successful! Redirecting to dashboard...');
+    // Redirect to home (dashboard) after signup
+    router.push('/home');
   };
 
   return (

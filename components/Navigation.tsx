@@ -1,5 +1,7 @@
 "use client";
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { clearAuthToken } from '@/lib/auth';
 
 interface NavigationProps {
   currentPage?: string;
@@ -10,17 +12,41 @@ export default function Navigation({ currentPage }: NavigationProps) {
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [showBookingsDropdown, setShowBookingsDropdown] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    clearAuthToken();
+    router.push('/login');
+  };
 
   return (
     <>
       {/* Top Navigation */}
-      <nav className="navigation">
+      <nav className="navigation" onClick={() => showMobileMenu && setShowMobileMenu(false)}>
         <div className="nav-container">
-          <div className="nav-links">
+          {/* Hamburger Menu Button - Mobile Only */}
+          <button 
+            className="hamburger-menu"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMobileMenu(!showMobileMenu);
+            }}
+            aria-label="Toggle mobile menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div className={`nav-links ${showMobileMenu ? 'mobile-active' : ''}`}>
             <a href="/home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`}>Home</a>
           <div 
             className="nav-link nav-dropdown" 
-            onClick={() => setShowBookingsDropdown((v) => !v)} 
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowBookingsDropdown((v) => !v);
+            }}
             onMouseLeave={() => setShowBookingsDropdown(false)}
             style={{ position: 'relative' }}
           >
@@ -43,7 +69,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
           <a href="/equipment" className={`nav-link ${currentPage === 'equipment' ? 'active' : ''}`}>Equipment</a>
           <a href="/events" className={`nav-link ${currentPage === 'events' ? 'active' : ''}`}>Events</a>
           <a href="/support" className={`nav-link ${currentPage === 'support' ? 'active' : ''}`}>Support</a>
-          <a href="/notifications" className="nav-link" style={{ position: 'relative' }}>
+          <a href="/notifications" className="nav-link" style={{ position: 'relative' }} onClick={() => setShowMobileMenu(false)}>
             Notifications
             {/* Unread badge */}
             <span style={{
@@ -62,7 +88,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
               boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
             }}>3</span>
           </a>
-          <div className="nav-link notification-section" onClick={() => setShowNotificationCard(!showNotificationCard)}>
+          <div className="nav-link notification-section" onClick={(e) => {
+            e.stopPropagation();
+            setShowNotificationCard(!showNotificationCard);
+          }}>
             <span>Quick View</span>
             {showNotificationCard && (
               <div className="notification-card">
@@ -98,7 +127,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </div>
             )}
           </div>
-          <div className="nav-link nav-dropdown" onClick={() => setShowSettingsDropdown((v) => !v)} tabIndex={0} onBlur={() => setShowSettingsDropdown(false)} style={{ position: 'relative' }}>
+          <div className="nav-link nav-dropdown" onClick={(e) => {
+            e.stopPropagation();
+            setShowSettingsDropdown((v) => !v);
+          }} tabIndex={0} onBlur={() => setShowSettingsDropdown(false)} style={{ position: 'relative' }}>
             <span>Settings</span>
             <div className="dropdown-arrow">▼</div>
             {showSettingsDropdown && (
@@ -126,8 +158,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                   Reset Password
                 </div>
                 <div className="dropdown-item" onClick={() => {
-                  localStorage.removeItem('adminToken');
-                  window.location.href = '/login';
+                  handleLogout();
                 }}>
                   <span className="dropdown-icon">🚪</span>
                   Logout
@@ -138,7 +169,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
           </div>
         
           {/* Profile Section */}
-        <div className="profile-section" onClick={() => setShowProfileCard(!showProfileCard)}>
+        <div className="profile-section" onClick={(e) => {
+          e.stopPropagation();
+          setShowProfileCard(!showProfileCard);
+        }}>
           <div className="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" width="24" height="24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75v-.75z" />
@@ -164,7 +198,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                 <button className="profile-btn cancel-btn" onClick={() => setShowProfileCard(false)}>
                   Cancel
                 </button>
-                <button className="profile-btn logout-btn" onClick={() => window.location.href = '/login'}>
+                <button className="profile-btn logout-btn" onClick={handleLogout}>
                   Logout
                 </button>
               </div>
@@ -498,6 +532,30 @@ export default function Navigation({ currentPage }: NavigationProps) {
           }
         }
 
+        /* Hamburger Menu */
+        .hamburger-menu {
+          display: none;
+          flex-direction: column;
+          gap: 5px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          z-index: 1003;
+        }
+
+        .hamburger-menu span {
+          width: 25px;
+          height: 3px;
+          background: #111;
+          border-radius: 2px;
+          transition: all 0.3s ease;
+        }
+
+        .hamburger-menu:hover span {
+          background: #37e663;
+        }
+
         /* Responsive Design */
         @media (max-width: 1400px) {
           .navigation {
@@ -562,8 +620,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
             padding: 0.8rem 1rem;
           }
           .nav-container {
-            flex-direction: column;
+            flex-direction: row;
             gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
           }
           .nav-links {
             gap: 1rem;
@@ -579,7 +639,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
             right: -50px;
           }
           .profile-section {
-            order: -1;
+            order: unset;
           }
           .profile-name {
             font-size: 0.95rem;
@@ -587,71 +647,311 @@ export default function Navigation({ currentPage }: NavigationProps) {
         }
 
         @media (max-width: 768px) {
-          .nav-links {
-            gap: 0.8rem;
+          .navigation {
+            padding: 1rem 1rem 0.5rem 1rem;
           }
+
+          .hamburger-menu {
+            display: flex;
+          }
+
+          .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+          }
+
+          .nav-links {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            flex-direction: column;
+            gap: 0;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            z-index: 1002;
+            border-radius: 0;
+          }
+
+          .nav-links.mobile-active {
+            max-height: 600px;
+            padding: 1rem 0;
+          }
+
           .nav-link {
-            font-size: 0.85rem;
-            padding: 0.25rem 0.4rem;
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+            width: 100%;
+            text-align: left;
+            border: none;
+            margin: 0;
+            border-radius: 0;
+            transition: background 0.2s;
+          }
+
+          .nav-link:hover,
+          .nav-link.active {
+            background: rgba(55, 230, 99, 0.1);
+            color: #111;
+          }
+
+          .nav-link.active {
+            border-left: 3px solid #37e663;
+            padding-left: calc(1.5rem - 3px);
+          }
+
+          .nav-dropdown {
+            position: relative;
+          }
+
+          .dropdown-menu {
+            position: static;
+            background: #f9fafb;
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            border-radius: 0;
+            box-shadow: none;
+            min-width: unset;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+          }
+
+          .nav-dropdown.active .dropdown-menu {
+            max-height: 300px;
+          }
+
+          .dropdown-item {
+            padding: 0.75rem 1.5rem 0.75rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 1rem;
+          }
+
+          .dropdown-item:last-child {
+            border-bottom: none;
+          }
+
+          .notification-card {
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: auto;
+            max-height: 60vh;
+            border-radius: 12px 12px 0 0;
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1003;
+            animation: slideUp 0.3s ease;
+          }
+
+          .notification-card-body {
+            max-height: 40vh;
+          }
+
+          .profile-section {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0;
+            background: none;
+          }
+
+          .profile-name {
+            display: none;
+          }
+
+          .profile-card {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: auto;
+            max-height: 60vh;
+            border-radius: 12px 12px 0 0;
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1003;
+            margin-top: 0;
+            animation: slideUp 0.3s ease;
+          }
+
+          @keyframes slideUp {
+            from {
+              transform: translateY(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
           }
         }
 
         @media (max-width: 640px) {
           .navigation {
-            padding: 0.6rem 0.8rem;
+            padding: 0.8rem 0.8rem 0.4rem 0.8rem;
           }
-          .nav-links {
-            gap: 0.6rem;
-            justify-content: space-between;
-          }
+
           .nav-link {
-            font-size: 0.8rem;
-            padding: 0.2rem 0.3rem;
+            font-size: 0.95rem;
+            padding: 0.7rem 1.2rem;
           }
-          .notification-card {
-            width: 260px;
-            right: -80px;
+
+          .profile-icon {
+            width: 2rem;
+            height: 2rem;
+          }
+
+          .profile-icon svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .dropdown-item {
+            padding: 0.65rem 1.2rem 0.65rem 1.8rem;
+            font-size: 0.95rem;
+          }
+
+          .dropdown-icon {
+            font-size: 0.9rem;
+          }
+
+          .notification-card,
+          .profile-card {
+            border-radius: 16px 16px 0 0;
           }
         }
 
         @media (max-width: 480px) {
           .navigation {
-            padding: 0.5rem;
+            padding: 0.6rem 0.6rem 0.3rem 0.6rem;
           }
+
+          .hamburger-menu span {
+            width: 22px;
+            height: 2.5px;
+          }
+
           .nav-links {
-            gap: 0.4rem;
-            flex-direction: column;
-            width: 100%;
+            max-height: 500px;
+            padding: 0.8rem 0;
           }
+
           .nav-link {
-            font-size: 0.75rem;
-            padding: 0.3rem 0.5rem;
-            text-align: center;
-            width: 100%;
+            font-size: 0.9rem;
+            padding: 0.65rem 1rem;
           }
-          .notification-card {
-            width: 240px;
-            right: -100px;
+
+          .nav-link.active {
+            padding-left: calc(1rem - 3px);
           }
-          .profile-name {
+
+          .profile-icon {
+            width: 1.8rem;
+            height: 1.8rem;
+          }
+
+          .profile-icon svg {
+            width: 18px;
+            height: 18px;
+          }
+
+          .dropdown-item {
+            padding: 0.6rem 1rem 0.6rem 1.6rem;
+            font-size: 0.9rem;
+          }
+
+          .notification-item {
+            padding: 0.8rem 1rem;
+          }
+
+          .notification-text {
             font-size: 0.85rem;
           }
-          .profile-card {
-            width: 260px;
+
+          .notification-time {
+            font-size: 0.75rem;
+          }
+
+          .profile-card-title {
+            font-size: 1rem;
+          }
+
+          .profile-card-email,
+          .profile-card-phone {
+            font-size: 0.85rem;
+          }
+
+          .profile-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
           }
         }
 
         @media (max-width: 360px) {
-          .nav-links {
-            gap: 0.3rem;
+          .navigation {
+            padding: 0.5rem;
           }
+
           .nav-link {
-            font-size: 0.7rem;
-            padding: 0.25rem 0.4rem;
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
           }
-          .notification-card {
-            width: 220px;
-            right: -120px;
+
+          .nav-link.active {
+            padding-left: calc(0.8rem - 3px);
+          }
+
+          .profile-icon {
+            width: 1.6rem;
+            height: 1.6rem;
+          }
+
+          .profile-icon svg {
+            width: 16px;
+            height: 16px;
+          }
+
+          .dropdown-item {
+            padding: 0.5rem 0.8rem 0.5rem 1.4rem;
+            font-size: 0.85rem;
+          }
+
+          .dropdown-icon {
+            font-size: 0.8rem;
+          }
+
+          .notification-item {
+            padding: 0.7rem 0.8rem;
+          }
+
+          .notification-text {
+            font-size: 0.8rem;
+          }
+
+          .profile-card {
+            width: 90vw;
+          }
+
+          .profile-card-title {
+            font-size: 0.95rem;
+          }
+
+          .profile-btn {
+            padding: 0.45rem 0.8rem;
+            font-size: 0.8rem;
           }
         }
       `}</style>
