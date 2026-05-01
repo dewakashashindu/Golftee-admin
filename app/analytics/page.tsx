@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
 import PageTransition from "../../components/PageTransition";
+import { bookings as mockBookings, bookingEquipment as mockBookingEquipment } from "@/lib/mockStore";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -81,64 +82,18 @@ interface BookingEquipment {
   };
 }
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
-// Normalize API base to avoid double "/api" or extra slashes
-const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
-const buildApiUrl = (path: string) => {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}/api${p}`;
-};
-
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingEquipment, setBookingEquipment] = useState<BookingEquipment[]>([]);
   const [timeRange, setTimeRange] = useState<"day" | "week" | "month" | "year">("month");
-  // Fetch bookings
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const bookingsUrl = buildApiUrl('/bookings');
-        const equipmentUrl = buildApiUrl('/booking-equipment');
-        
-        console.log('Fetching from:', bookingsUrl, equipmentUrl);
-        
-        const [bookingsRes, equipmentRes] = await Promise.all([
-          fetch(bookingsUrl),
-          fetch(equipmentUrl),
-        ]);
-
-        console.log('Response status:', bookingsRes.status, equipmentRes.status);
-
-        if (!bookingsRes.ok || !equipmentRes.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const bookingsData = await bookingsRes.json();
-        const equipmentData = await equipmentRes.json();
-
-        console.log('Bookings data:', bookingsData);
-        console.log('Equipment data:', equipmentData);
-
-        const bookingsArray = bookingsData.success ? bookingsData.data : (bookingsData.bookings || []);
-        const equipmentArray = equipmentData.success ? equipmentData.data : (equipmentData.data || []);
-
-        console.log('Setting bookings:', bookingsArray.length, 'equipment:', equipmentArray.length);
-
-        setBookings(bookingsArray);
-        setBookingEquipment(equipmentArray);
-      } catch (err: any) {
-        console.error("Error fetching analytics data:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    setLoading(true);
+    setError(null);
+    setBookings(mockBookings);
+    setBookingEquipment(mockBookingEquipment);
+    setLoading(false);
   }, []);
 
   // ==================== ANALYTICS CALCULATIONS ====================

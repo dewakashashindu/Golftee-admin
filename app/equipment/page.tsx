@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
+import { equipment as mockEquipment, addEquipment, updateEquipment, deleteEquipment as removeEquipment } from "@/lib/mockStore";
 
 interface Equipment {
   id: string;
@@ -15,14 +16,6 @@ interface Equipment {
   addedDate: string; // ISO date or YYYY-MM-DD
 }
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
-// Normalize API base to avoid double "/api" or trailing slashes
-const API_BASE = BACKEND.replace(/\/+$|\/api$/g, "");
-const buildApiUrl = (path: string) => {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}/api${p}`;
-};
-
 export default function EquipmentPage() {
   // UI state
   const [showForm, setShowForm] = useState(false);
@@ -32,7 +25,7 @@ export default function EquipmentPage() {
 
   // data state
   const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
@@ -54,42 +47,11 @@ export default function EquipmentPage() {
     rentalPrice: ""
   });
 
-  // Fetch equipment from API
   useEffect(() => {
-    fetchEquipment();
+    setEquipment(mockEquipment as Equipment[]);
+    setTotal(mockEquipment.length);
+    setLoading(false);
   }, []);
-
-  const fetchEquipment = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(buildApiUrl('/equipment'));
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        // Transform API data to match frontend interface
-        const transformed = result.data.map((item: any) => ({
-          id: item.id.toString(),
-          name: item.name,
-          type: item.type,
-          description: item.description || '',
-          quantity: item.quantity || 0,
-          condition: item.condition || 'good',
-          rentalPrice: item.rental_price ? `$${item.rental_price}` : '$0',
-          addedDate: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
-        }));
-        setEquipment(transformed);
-        setTotal(transformed.length);
-      } else {
-        setError('Failed to load equipment');
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Failed to connect to server');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,27 +72,20 @@ export default function EquipmentPage() {
         rentalPrice: form.rentalPrice.replace('$', '').replace('/day', '').trim()
       };
 
-      const url = editingId ? buildApiUrl(`/equipment/${editingId}`) : buildApiUrl('/equipment');
-      const method = editingId ? 'PUT' : 'POST';
+      if (editingId) {
+        updateEquipment(editingId, payload as any);
+        setInfoMessage('Equipment updated successfully');
+      } else {
+        addEquipment(payload as any);
+        setInfoMessage('Equipment added successfully');
+      }
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setInfoMessage(editingId ? 'Equipment updated successfully' : 'Equipment added successfully');
-        fetchEquipment(); // Reload data
+      setEquipment(mockEquipment as Equipment[]);
+      setTotal(mockEquipment.length);
         setForm({ name: "", type: "Golf Carts", description: "", quantity: "", condition: "excellent", rentalPrice: "" });
         setEditingId(null);
         setShowForm(false);
         setTimeout(() => setInfoMessage(null), 3000);
-      } else {
-        setError(result.error || 'Failed to save equipment');
-      }
     } catch (err) {
       console.error('Save error:', err);
       setError('Failed to save equipment');
@@ -163,19 +118,11 @@ export default function EquipmentPage() {
     setError(null);
     
     try {
-      const response = await fetch(buildApiUrl(`/equipment/${id}`), {
-        method: "DELETE"
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setInfoMessage("Equipment deleted successfully");
-        fetchEquipment();
-        setTimeout(() => setInfoMessage(null), 3000);
-      } else {
-        setError(result.error || "Failed to delete equipment");
-      }
+      removeEquipment(id);
+      setEquipment(mockEquipment as Equipment[]);
+      setTotal(mockEquipment.length);
+      setInfoMessage("Equipment deleted successfully");
+      setTimeout(() => setInfoMessage(null), 3000);
     } catch (err) {
       console.error("Delete error:", err);
       setError("Failed to delete equipment");

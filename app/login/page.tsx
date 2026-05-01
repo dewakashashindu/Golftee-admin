@@ -8,25 +8,9 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Call backend login
-    fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
-      .then(async (res) => {
-        if (!res.ok) throw await res.json();
-        return res.json();
-      })
-      .then((data) => {
-        // store token and redirect
-        if (data.token) localStorage.setItem('tt_token', data.token);
-        window.location.href = '/home';
-      })
-      .catch((err) => {
-        console.error('login error', err);
-        alert(err?.error || err?.message || 'Login failed');
-      });
+    localStorage.setItem('tt_token', 'mock-token');
+    localStorage.setItem('tt_user', JSON.stringify({ username }));
+    window.location.href = '/home';
   };
 
   return (

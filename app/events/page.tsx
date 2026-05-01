@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
 import { EventItem } from "@/lib/types/event";
-import { supabase } from "@/lib/supabase";
+import { events as mockEvents, addEvent, updateEvent } from "@/lib/mockStore";
 
 // Backend compatibility interface
 interface Event {
@@ -24,13 +24,6 @@ interface Event {
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   participants?: string[];
 }
-
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "";
-const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
-const buildApiUrl = (path: string) => {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}/api${p}`;
-};
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -57,28 +50,8 @@ export default function EventsPage() {
   });
 
   useEffect(() => {
-    fetchEvents();
+    setEvents([...mockEvents]);
   }, []);
-
-  const fetchEvents = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(buildApiUrl('/events'));
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        setEvents(result.data);
-      } else {
-        setError('Failed to load events');
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Failed to connect to server');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value, type } = e.target;
@@ -87,20 +60,6 @@ export default function EventsPage() {
     } else {
       setForm({ ...form, [name]: value });
     }
-  }
-
-  async function uploadPoster(file: File): Promise<string> {
-    const fileName = `${Date.now()}-${file.name}`;
-
-    const { data, error } = await supabase.storage
-      .from("event-posters")
-      .upload(fileName, file);
-
-    if (error) throw error;
-
-    return supabase.storage
-      .from("event-posters")
-      .getPublicUrl(fileName).data.publicUrl;
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
@@ -127,18 +86,8 @@ export default function EventsPage() {
         return;
       }
 
-      // Upload poster if a new file is selected
-      let posterUrl = form.poster_url;
-      if (posterFile) {
-        try {
-          posterUrl = await uploadPoster(posterFile);
-          setInfoMessage('Poster uploaded successfully!');
-        } catch (uploadErr) {
-          console.error('Poster upload error:', uploadErr);
-          setError('Failed to upload poster. Saving event without poster.');
-          posterUrl = undefined;
-        }
-      }
+      // Use the local preview URL only; no backend upload in frontend-only mode.
+      const posterUrl = form.poster_url || undefined;
 
       // Map EventItem fields to backend Event fields
       const payload: any = {
@@ -161,42 +110,34 @@ export default function EventsPage() {
         payload.poster = posterUrl;
       }
 
-      const url = editingId ? buildApiUrl(`/events/${editingId}`) : buildApiUrl('/events');
-      const method = editingId ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setInfoMessage(editingId ? 'Event updated successfully' : 'Event created successfully');
-        fetchEvents();
-        setForm({
-          type: "TOURNAMENT",
-          title: "",
-          description: "",
-          start_date: "",
-          start_time: "09:00",
-          location: "",
-          registration_deadline: "",
-          max_participants: 50,
-          entry_fee: 0,
-          prize_pool: 0,
-          format: "",
-          status: "upcoming",
-          poster_url: ""
-        });
-        setPosterFile(null);
-        setEditingId(null);
-        setShowForm(false);
-        setTimeout(() => setInfoMessage(null), 3000);
+      if (editingId) {
+        updateEvent(editingId, payload);
+        setInfoMessage('Event updated successfully');
       } else {
-        setError(result.error || 'Failed to save event');
+        addEvent(payload);
+        setInfoMessage('Event created successfully');
       }
+
+      setEvents([...mockEvents]);
+      setForm({
+        type: "TOURNAMENT",
+        title: "",
+        description: "",
+        start_date: "",
+        start_time: "09:00",
+        location: "",
+        registration_deadline: "",
+        max_participants: 50,
+        entry_fee: 0,
+        prize_pool: 0,
+        format: "",
+        status: "upcoming",
+        poster_url: ""
+      });
+      setPosterFile(null);
+      setEditingId(null);
+      setShowForm(false);
+      setTimeout(() => setInfoMessage(null), 3000);
     } catch (err) {
       console.error('Save error:', err);
       setError('Failed to save event');
@@ -232,24 +173,10 @@ export default function EventsPage() {
     setError(null);
     
     try {
-      // Update status to cancelled instead of deleting
-      // This implements soft delete with status lifecycle
-      // ✅ Never delete, always change status
-      const response = await fetch(buildApiUrl(`/events/${id}`), {
-        method: "PUT",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: "cancelled" })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setInfoMessage("Event cancelled successfully");
-        fetchEvents();
-        setTimeout(() => setInfoMessage(null), 3000);
-      } else {
-        setError(result.error || "Failed to cancel event");
-      }
+      updateEvent(id, { status: "cancelled" });
+      setEvents([...mockEvents]);
+      setInfoMessage("Event cancelled successfully");
+      setTimeout(() => setInfoMessage(null), 3000);
     } catch (err) {
       console.error("Cancel event error:", err);
       setError("Failed to cancel event");

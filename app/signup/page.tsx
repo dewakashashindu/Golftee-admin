@@ -10,32 +10,17 @@ export default function SignupPage() {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add signup logic here
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-    fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: email, password, email }),
-    })
-      .then(async (res) => {
-        if (!res.ok) throw await res.json();
-        return res.json();
-      })
-      .then(() => {
-        alert('Signup successful — please check email (confirm if required)');
-        router.push('/login');
-      })
-      .catch((err) => {
-        console.error('signup error', err);
-        alert(err?.error || err?.message || 'Signup failed');
-      });
+    localStorage.setItem('tt_user', JSON.stringify({ email }));
+    alert('Signup successful — local mock account created');
+    router.push('/login');
   };
 
   return (
-    <div className="signup-container">
+    <div className="login-container">
       {/* Background Circles */}
       <div className="bg-circle-left" />
       <div className="bg-circle-right" />

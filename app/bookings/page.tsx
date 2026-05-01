@@ -3,15 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
-
-// Support both env var names for flexibility
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
-// Normalize API base to avoid double "/api" or extra slashes
-const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
-const buildApiUrl = (path: string) => {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}/api${p}`;
-};
+import { bookings as mockBookings, cancelBooking } from "@/lib/mockStore";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -27,87 +19,33 @@ export default function BookingsPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
 
-    try {
-      const response = await fetch(buildApiUrl(`/bookings/${bookingId}/cancel`), {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        // Update local state to show cancelled status
-        setBookings(prevBookings =>
-          prevBookings.map(b =>
-            b.id === bookingId ? { ...b, bookingStatus: "CANCELLED" } : b
-          )
-        );
-        alert("Booking cancelled successfully");
-      } else {
-        alert("Failed to cancel booking");
-      }
-    } catch (err) {
-      console.error("Error cancelling booking:", err);
-      alert("Error cancelling booking");
-    }
+    cancelBooking(bookingId);
+    setBookings((prevBookings) =>
+      prevBookings.map((b) =>
+        b.id === bookingId ? { ...b, bookingStatus: "CANCELLED", status: "cancelled" } : b
+      )
+    );
+    alert("Booking cancelled successfully");
   };
-  useEffect(() => {
-    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
-  }, []);
 
   useEffect(() => {
-    let mounted = true;
     setLoading(true);
-    if (!BACKEND) {
-      setError("NEXT_PUBLIC_API_URL is not set");
-      setLoading(false);
-      return () => {
-        mounted = false;
-      };
-    }
+    const normalized = mockBookings.map((b: any) => ({
+      ...b,
+      fullName: b.fullName || b.name || "N/A",
+      phoneNo: b.phoneNo || b.phone || "N/A",
+      courseName: b.courseName || b.course_name || b.course || "N/A",
+      startTime: b.startTime || b.time || "N/A",
+      endTime: b.endTime || "N/A",
+      noPlayers: b.noPlayers || b.players_count || b.players || 0,
+      nonPlayers: b.nonPlayers || b.non_players_count || b.non_players || 0,
+      paymentStatus: b.paymentStatus || b.payment_status || "UNPAID",
+      bookingStatus: b.bookingStatus || b.status || "PENDING",
+      createdAt: b.createdAt || b.created_at || new Date().toISOString(),
+    }));
 
-    fetch(buildApiUrl('/bookings'))
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        if (!mounted) return;
-        console.log("Fetched bookings data:", data);
-        const list = Array.isArray(data)
-          ? data
-          : (data?.data || data?.bookings || []);
-        console.log("Parsed bookings list:", list);
-        
-        // Helper to treat empty strings as missing
-        const getValid = (val: any) => val && val !== "" ? val : null;
-        
-        // Normalize field names to handle backend inconsistencies
-        const normalized = list.map((b: any) => ({
-          ...b,
-          fullName: getValid(b.fullName) || getValid(b.customer_name) || getValid(b.name) || getValid(b.customer?.name) || getValid(b.user?.name) || "N/A",
-          phoneNo: getValid(b.phoneNo) || getValid(b.phone) || getValid(b.phone_number) || getValid(b.customer?.phone) || getValid(b.user?.phone) || "N/A",
-          courseName: getValid(b.courseName) || getValid(b.court_name) || getValid(b.course) || getValid(b.course_name) || "N/A",
-          startTime: getValid(b.startTime) || getValid(b.start_time) || getValid(b.time) || "N/A",
-          endTime: getValid(b.endTime) || getValid(b.end_time) || "N/A",
-          noPlayers: b.noPlayers || b.players_count || b.players || 0,
-          nonPlayers: b.nonPlayers || b.non_players_count || b.non_players || 0,
-          paymentStatus: getValid(b.paymentStatus) || getValid(b.payment_status) || "UNPAID",
-          bookingStatus: getValid(b.bookingStatus) || getValid(b.status) || "PENDING",
-          createdAt: getValid(b.createdAt) || getValid(b.created_at) || new Date().toISOString(),
-        }));
-        
-        console.log("Normalized bookings:", normalized);
-        setBookings(normalized);
-      })
-      .catch((err) => {
-        console.error("Error fetching bookings:", err);
-        if (mounted) setError(String(err));
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
+    setBookings(normalized);
+    setLoading(false);
   }, []);
 
   const filteredBookings = useMemo(() => {

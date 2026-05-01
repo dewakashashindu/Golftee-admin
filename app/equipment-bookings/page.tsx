@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import Navigation from "../../components/Navigation";
 import Footer from "../../components/Footer";
 import PageTransition from "../../components/PageTransition";
+import { bookingEquipment as mockBookingEquipment, removeBookingEquipment } from "@/lib/mockStore";
 
 interface Equipment {
   id: string;
@@ -53,15 +54,6 @@ interface BookingEquipment {
   equipment: Equipment;
 }
 
-// Support both env var names for flexibility
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
-// Normalize API base to avoid double "/api" or extra slashes
-const API_BASE = BACKEND.replace(/\/+$/, "").replace(/\/?api$/, "");
-const buildApiUrl = (path: string) => {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}/api${p}`;
-};
-
 export default function EquipmentBookingsPage() {
   const [bookingEquipment, setBookingEquipment] = useState<BookingEquipment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,95 +64,18 @@ export default function EquipmentBookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<BookingEquipment | null>(null);
 
   useEffect(() => {
-    fetchBookingEquipment();
+    setBookingEquipment(mockBookingEquipment as BookingEquipment[]);
+    setLoading(false);
   }, []);
-
-  const fetchBookingEquipment = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Check if API URL is configured
-      if (!BACKEND) {
-        throw new Error("API URL not configured. Set NEXT_PUBLIC_API_URL environment variable.");
-      }
-
-      const url = buildApiUrl('/booking-equipment');
-      console.log("Fetching from:", url);
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log("API Response:", result);
-
-      if (result.success && result.data) {
-        // Normalize the data to handle different field naming conventions
-        const normalized = result.data.map((item: any) => ({
-          id: item.id,
-          bookingId: item.bookingId || item.booking_id,
-          equipmentId: item.equipmentId || item.equipment_id,
-          quantity: item.quantity,
-          rentalPrice: item.rentalPrice || item.rental_price,
-          createdAt: item.createdAt || item.created_at,
-          booking: {
-            id: item.booking?.id,
-            name: item.booking?.name,
-            fullName: item.booking?.fullName || item.booking?.full_name,
-            date: item.booking?.date,
-            startTime: item.booking?.startTime || item.booking?.start_time,
-            endTime: item.booking?.endTime || item.booking?.end_time,
-            email: item.booking?.email,
-            phoneNo: item.booking?.phoneNo || item.booking?.phone_no || item.booking?.phone,
-            status: item.booking?.status,
-            members: item.booking?.members || item.booking?.noPlayers || item.booking?.no_players || 0,
-            createdAt: item.booking?.createdAt || item.booking?.created_at,
-            user: item.booking?.user
-          },
-          equipment: {
-            id: item.equipment?.id,
-            name: item.equipment?.name,
-            type: item.equipment?.type,
-            condition: item.equipment?.condition,
-            rentalPrice: item.equipment?.rentalPrice || item.equipment?.rental_price,
-            quantity: item.equipment?.quantity,
-            description: item.equipment?.description
-          }
-        }));
-        setBookingEquipment(normalized);
-      } else {
-        const errorMsg = result.error || "Failed to load equipment bookings. API returned no data.";
-        console.error("API Error:", errorMsg);
-        setError(errorMsg);
-      }
-    } catch (err: any) {
-      console.error("Fetch error:", err);
-      const errorMessage = err.message || "Failed to connect to server";
-      setError(`Error: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to remove this equipment from the booking?")) return;
 
     setLoading(true);
     try {
-      const response = await fetch(buildApiUrl(`/booking-equipment/${id}`), {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setBookingEquipment(bookingEquipment.filter((item) => item.id !== id));
-        alert("Equipment removed from booking");
-      } else {
-        alert("Failed to remove equipment");
-      }
+      removeBookingEquipment(id);
+      setBookingEquipment(mockBookingEquipment as BookingEquipment[]);
+      alert("Equipment removed from booking");
     } catch (err) {
       console.error("Delete error:", err);
       alert("Failed to remove equipment");
