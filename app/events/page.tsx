@@ -136,7 +136,7 @@ export default function EventsPage() {
         } catch (uploadErr) {
           console.error('Poster upload error:', uploadErr);
           setError('Failed to upload poster. Saving event without poster.');
-          posterUrl = null;
+          posterUrl = undefined;
         }
       }
 
