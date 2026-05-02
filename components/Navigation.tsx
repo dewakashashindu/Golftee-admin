@@ -1,6 +1,6 @@
 "use client";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { clearAuthToken } from '@/lib/auth';
 
 interface NavigationProps {
@@ -14,6 +14,44 @@ export default function Navigation({ currentPage }: NavigationProps) {
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Ensure overlay-style UI never persists after route changes.
+    setShowMobileMenu(false);
+    setShowNotificationCard(false);
+    setShowSettingsDropdown(false);
+    setShowBookingsDropdown(false);
+    setShowProfileCard(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setShowMobileMenu(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!showMobileMenu && !showNotificationCard && !showSettingsDropdown && !showBookingsDropdown && !showProfileCard) {
+      return;
+    }
+
+    const handleDocumentClick = () => {
+      setShowMobileMenu(false);
+      setShowNotificationCard(false);
+      setShowSettingsDropdown(false);
+      setShowBookingsDropdown(false);
+      setShowProfileCard(false);
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, [showMobileMenu, showNotificationCard, showSettingsDropdown, showBookingsDropdown, showProfileCard]);
 
   const handleLogout = () => {
     clearAuthToken();
@@ -23,7 +61,13 @@ export default function Navigation({ currentPage }: NavigationProps) {
   return (
     <>
       {/* Top Navigation */}
-      <nav className="navigation" onClick={() => showMobileMenu && setShowMobileMenu(false)}>
+      <nav className="navigation" onClick={() => {
+        setShowMobileMenu(false);
+        setShowNotificationCard(false);
+        setShowSettingsDropdown(false);
+        setShowBookingsDropdown(false);
+        setShowProfileCard(false);
+      }}>
         <div className="nav-container">
           {/* Hamburger Menu Button - Mobile Only */}
           <button 
@@ -31,6 +75,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
             onClick={(e) => {
               e.stopPropagation();
               setShowMobileMenu(!showMobileMenu);
+              setShowNotificationCard(false);
+              setShowSettingsDropdown(false);
+              setShowBookingsDropdown(false);
+              setShowProfileCard(false);
             }}
             aria-label="Toggle mobile menu"
           >
@@ -40,7 +88,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
           </button>
 
           <div className={`nav-links ${showMobileMenu ? 'mobile-active' : ''}`}>
-            <a href="/home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`}>Home</a>
+            <a href="/home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>Home</a>
           <div 
             className="nav-link nav-dropdown" 
             onClick={(e) => {
@@ -54,21 +102,21 @@ export default function Navigation({ currentPage }: NavigationProps) {
             <div className="dropdown-arrow">▼</div>
             {showBookingsDropdown && (
               <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                <a href="/bookings" className="dropdown-item">
+                <a href="/bookings" className="dropdown-item" onClick={() => setShowMobileMenu(false)}>
                   <span className="dropdown-icon">📅</span>
                   All Bookings
                 </a>
-                <a href="/equipment-bookings" className="dropdown-item">
+                <a href="/equipment-bookings" className="dropdown-item" onClick={() => setShowMobileMenu(false)}>
                   <span className="dropdown-icon">🏌️</span>
                   Equipment Bookings
                 </a>
               </div>
             )}
           </div>
-          <a href="/analytics" className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`}>Analytics</a>
-          <a href="/equipment" className={`nav-link ${currentPage === 'equipment' ? 'active' : ''}`}>Equipment</a>
-          <a href="/events" className={`nav-link ${currentPage === 'events' ? 'active' : ''}`}>Events</a>
-          <a href="/support" className={`nav-link ${currentPage === 'support' ? 'active' : ''}`}>Support</a>
+          <a href="/analytics" className={`nav-link ${currentPage === 'analytics' ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>Analytics</a>
+          <a href="/equipment" className={`nav-link ${currentPage === 'equipment' ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>Equipment</a>
+          <a href="/events" className={`nav-link ${currentPage === 'events' ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>Events</a>
+          <a href="/support" className={`nav-link ${currentPage === 'support' ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>Support</a>
           <a href="/notifications" className="nav-link" style={{ position: 'relative' }} onClick={() => setShowMobileMenu(false)}>
             Notifications
             {/* Unread badge */}
@@ -845,6 +893,11 @@ export default function Navigation({ currentPage }: NavigationProps) {
           }
 
           .nav-links {
+            max-height: 0;
+            padding: 0;
+          }
+
+          .nav-links.mobile-active {
             max-height: 500px;
             padding: 0.8rem 0;
           }

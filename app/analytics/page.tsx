@@ -447,122 +447,130 @@ export default function AnalyticsPage() {
             {/* Booking Trends */}
             <div className="chart-card">
               <h3 className="chart-title">Booking Trends</h3>
-              <Line
-                data={{
-                  labels: bookingTrend.labels,
-                  datasets: [
-                    {
-                      label: "Bookings",
-                      data: bookingTrend.data,
-                      borderColor: CHART_COLORS.primary,
-                      backgroundColor: "rgba(22, 163, 74, 0.15)",
-                      borderWidth: 2,
-                      fill: true,
-                      tension: 0.4,
-                      pointBackgroundColor: CHART_COLORS.primary,
-                      pointBorderColor: "#fff",
-                      pointBorderWidth: 2,
-                      pointRadius: 4,
-                      pointHoverRadius: 6,
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: true,
-                  plugins: {
-                    legend: {
-                      position: "bottom" as const,
-                      labels: {
-                        color: CHART_COLORS.text,
-                        usePointStyle: true,
-                        boxWidth: 8,
-                        boxHeight: 8,
+              <div className="chart-scroll">
+                <div className="chart-responsive chart-responsive-wide">
+                  <Line
+                    data={{
+                      labels: bookingTrend.labels,
+                      datasets: [
+                        {
+                          label: "Bookings",
+                          data: bookingTrend.data,
+                          borderColor: CHART_COLORS.primary,
+                          backgroundColor: "rgba(22, 163, 74, 0.15)",
+                          borderWidth: 2,
+                          fill: true,
+                          tension: 0.4,
+                          pointBackgroundColor: CHART_COLORS.primary,
+                          pointBorderColor: "#fff",
+                          pointBorderWidth: 2,
+                          pointRadius: 4,
+                          pointHoverRadius: 6,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "bottom" as const,
+                          labels: {
+                            color: CHART_COLORS.text,
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                          },
+                        },
+                        tooltip: {
+                          backgroundColor: "rgba(17,17,17,0.9)",
+                          titleColor: "#ffffff",
+                          bodyColor: "#ffffff",
+                          borderColor: "#111827",
+                          borderWidth: 1,
+                          padding: 10,
+                          displayColors: false,
+                        },
                       },
-                    },
-                    tooltip: {
-                      backgroundColor: "rgba(17,17,17,0.9)",
-                      titleColor: "#ffffff",
-                      bodyColor: "#ffffff",
-                      borderColor: "#111827",
-                      borderWidth: 1,
-                      padding: 10,
-                      displayColors: false,
-                    },
-                  },
-                  scales: {
-                    x: {
-                      grid: { color: CHART_COLORS.grid },
-                      border: { display: false },
-                      ticks: { color: CHART_COLORS.subtext },
-                    },
-                    y: {
-                      beginAtZero: true,
-                      grid: { color: CHART_COLORS.grid },
-                      border: { display: false },
-                      ticks: { stepSize: 1, color: CHART_COLORS.subtext },
-                    },
-                  },
-                }}
-              />
+                      scales: {
+                        x: {
+                          grid: { color: CHART_COLORS.grid },
+                          border: { display: false },
+                          ticks: { color: CHART_COLORS.subtext },
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: { color: CHART_COLORS.grid },
+                          border: { display: false },
+                          ticks: { stepSize: 1, color: CHART_COLORS.subtext },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Revenue Trends */}
             <div className="chart-card">
               <h3 className="chart-title">Monthly Revenue</h3>
-              <Bar
-                data={{
-                  labels: revenueTrend.labels,
-                  datasets: [
-                    {
-                      label: "Revenue ($)",
-                      data: revenueTrend.data,
-                      backgroundColor: CHART_COLORS.primarySoft,
-                      borderColor: CHART_COLORS.primary,
-                      borderWidth: 1,
-                      borderRadius: 8,
-                      maxBarThickness: 28,
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: true,
-                  plugins: {
-                    legend: {
-                      position: "bottom" as const,
-                      labels: {
-                        color: CHART_COLORS.text,
-                        usePointStyle: true,
-                        boxWidth: 8,
-                        boxHeight: 8,
+              <div className="chart-scroll">
+                <div className="chart-responsive chart-responsive-wide">
+                  <Bar
+                    data={{
+                      labels: revenueTrend.labels,
+                      datasets: [
+                        {
+                          label: "Revenue ($)",
+                          data: revenueTrend.data,
+                          backgroundColor: CHART_COLORS.primarySoft,
+                          borderColor: CHART_COLORS.primary,
+                          borderWidth: 1,
+                          borderRadius: 8,
+                          maxBarThickness: 28,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "bottom" as const,
+                          labels: {
+                            color: CHART_COLORS.text,
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                          },
+                        },
+                        tooltip: {
+                          backgroundColor: "rgba(17,17,17,0.9)",
+                          titleColor: "#ffffff",
+                          bodyColor: "#ffffff",
+                          borderColor: "#111827",
+                          borderWidth: 1,
+                          padding: 10,
+                          displayColors: false,
+                        },
                       },
-                    },
-                    tooltip: {
-                      backgroundColor: "rgba(17,17,17,0.9)",
-                      titleColor: "#ffffff",
-                      bodyColor: "#ffffff",
-                      borderColor: "#111827",
-                      borderWidth: 1,
-                      padding: 10,
-                      displayColors: false,
-                    },
-                  },
-                  scales: {
-                    x: {
-                      grid: { color: CHART_COLORS.grid },
-                      border: { display: false },
-                      ticks: { color: CHART_COLORS.subtext },
-                    },
-                    y: {
-                      beginAtZero: true,
-                      grid: { color: CHART_COLORS.grid },
-                      border: { display: false },
-                      ticks: { color: CHART_COLORS.subtext },
-                    },
-                  },
-                }}
-              />
+                      scales: {
+                        x: {
+                          grid: { color: CHART_COLORS.grid },
+                          border: { display: false },
+                          ticks: { color: CHART_COLORS.subtext },
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: { color: CHART_COLORS.grid },
+                          border: { display: false },
+                          ticks: { color: CHART_COLORS.subtext },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
@@ -570,62 +578,67 @@ export default function AnalyticsPage() {
           <section className="utilization-section">
             <h2 className="section-title">Course Utilization</h2>
             <div className="utilization-chart">
-              <Bar
-                data={{
-                  labels: courseUtilization.labels,
-                  datasets: [
-                    {
-                      label: "Bookings",
-                      data: courseUtilization.data,
-                      backgroundColor: CHART_COLORS.blueSoft,
-                      borderColor: CHART_COLORS.blue,
-                      borderWidth: 1,
-                      borderRadius: 8,
-                      maxBarThickness: 28,
-                    },
-                  ],
-                }}
-                options={{
-                  indexAxis: "y" as const,
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: "bottom" as const,
-                      labels: {
-                        color: CHART_COLORS.text,
-                        usePointStyle: true,
-                        boxWidth: 8,
-                        boxHeight: 8,
+              <div className="chart-scroll">
+                <div className="chart-responsive chart-responsive-wide chart-responsive-tall">
+                  <Bar
+                    data={{
+                      labels: courseUtilization.labels,
+                      datasets: [
+                        {
+                          label: "Bookings",
+                          data: courseUtilization.data,
+                          backgroundColor: CHART_COLORS.blueSoft,
+                          borderColor: CHART_COLORS.blue,
+                          borderWidth: 1,
+                          borderRadius: 8,
+                          maxBarThickness: 28,
+                        },
+                      ],
+                    }}
+                    options={{
+                      indexAxis: "y" as const,
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "bottom" as const,
+                          labels: {
+                            color: CHART_COLORS.text,
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                          },
+                        },
+                        tooltip: {
+                          backgroundColor: "rgba(17,17,17,0.9)",
+                          titleColor: "#ffffff",
+                          bodyColor: "#ffffff",
+                          borderColor: "#111827",
+                          borderWidth: 1,
+                          padding: 10,
+                          displayColors: false,
+                        },
                       },
-                    },
-                    tooltip: {
-                      backgroundColor: "rgba(17,17,17,0.9)",
-                      titleColor: "#ffffff",
-                      bodyColor: "#ffffff",
-                      borderColor: "#111827",
-                      borderWidth: 1,
-                      padding: 10,
-                      displayColors: false,
-                    },
-                  },
-                  scales: {
-                    x: {
-                      beginAtZero: true,
-                      grid: { color: CHART_COLORS.grid },
-                      border: { display: false },
-                      ticks: { color: CHART_COLORS.subtext },
-                    },
-                    y: {
-                      grid: { color: CHART_COLORS.grid },
-                      border: { display: false },
-                      ticks: { color: CHART_COLORS.subtext },
-                    },
-                  },
-                }}
-              />
+                      scales: {
+                        x: {
+                          beginAtZero: true,
+                          grid: { color: CHART_COLORS.grid },
+                          border: { display: false },
+                          ticks: { color: CHART_COLORS.subtext },
+                        },
+                        y: {
+                          grid: { color: CHART_COLORS.grid },
+                          border: { display: false },
+                          ticks: { color: CHART_COLORS.subtext },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
             <div className="utilization-table">
+              <div className="table-scroll">
               <table>
                 <thead>
                   <tr>
@@ -649,6 +662,7 @@ export default function AnalyticsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </section>
 
@@ -659,29 +673,33 @@ export default function AnalyticsPage() {
               {/* New vs Returning */}
               <div className="chart-card">
                 <h3 className="chart-title">New vs Returning Customers</h3>
-                <Pie
-                  data={{
-                    labels: customerInsights.newVsReturning.labels,
-                    datasets: [
-                      {
-                        data: customerInsights.newVsReturning.data,
-                        backgroundColor: [CHART_COLORS.primarySoft, CHART_COLORS.primary],
-                        borderColor: [CHART_COLORS.primaryLight, CHART_COLORS.primary],
-                        borderWidth: 2,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                      legend: {
-                        position: "bottom" as const,
-                        labels: { color: CHART_COLORS.text },
-                      },
-                    },
-                  }}
-                />
+                <div className="chart-scroll">
+                  <div className="chart-responsive chart-responsive-pie">
+                    <Pie
+                      data={{
+                        labels: customerInsights.newVsReturning.labels,
+                        datasets: [
+                          {
+                            data: customerInsights.newVsReturning.data,
+                            backgroundColor: [CHART_COLORS.primarySoft, CHART_COLORS.primary],
+                            borderColor: [CHART_COLORS.primaryLight, CHART_COLORS.primary],
+                            borderWidth: 2,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: "bottom" as const,
+                            labels: { color: CHART_COLORS.text },
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Top Customers */}
@@ -710,6 +728,7 @@ export default function AnalyticsPage() {
           <section className="equipment-section">
             <h2 className="section-title">Equipment Analytics</h2>
             <div className="equipment-table">
+              <div className="table-scroll">
               <table>
                 <thead>
                   <tr>
@@ -738,6 +757,7 @@ export default function AnalyticsPage() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
           </section>
 
@@ -747,29 +767,33 @@ export default function AnalyticsPage() {
             <div className="cancellation-grid">
               <div className="chart-card">
                 <h3 className="chart-title">Status Breakdown</h3>
-                <Pie
-                  data={{
-                    labels: cancellationAnalysis.statusLabels.map((s) => s.charAt(0).toUpperCase() + s.slice(1)),
-                    datasets: [
-                      {
-                        data: cancellationAnalysis.statusData,
-                        backgroundColor: [CHART_COLORS.primary, CHART_COLORS.amber, CHART_COLORS.blue, CHART_COLORS.red],
-                        borderColor: [CHART_COLORS.primary, "#d97706", "#1e40af", CHART_COLORS.redDark],
-                        borderWidth: 2,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                      legend: {
-                        position: "bottom" as const,
-                        labels: { color: CHART_COLORS.text },
-                      },
-                    },
-                  }}
-                />
+                <div className="chart-scroll">
+                  <div className="chart-responsive chart-responsive-pie">
+                    <Pie
+                      data={{
+                        labels: cancellationAnalysis.statusLabels.map((s) => s.charAt(0).toUpperCase() + s.slice(1)),
+                        datasets: [
+                          {
+                            data: cancellationAnalysis.statusData,
+                            backgroundColor: [CHART_COLORS.primary, CHART_COLORS.amber, CHART_COLORS.blue, CHART_COLORS.red],
+                            borderColor: [CHART_COLORS.primary, "#d97706", "#1e40af", CHART_COLORS.redDark],
+                            borderWidth: 2,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: "bottom" as const,
+                            labels: { color: CHART_COLORS.text },
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="cancellation-summary">
@@ -999,6 +1023,31 @@ export default function AnalyticsPage() {
           border-radius: 12px;
           padding: 1.5rem;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          overflow-x: auto;
+        }
+
+        .chart-scroll {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .chart-responsive {
+          position: relative;
+          width: 100%;
+          min-height: 280px;
+        }
+
+        .chart-responsive-wide {
+          min-width: 560px;
+        }
+
+        .chart-responsive-tall {
+          min-height: 340px;
+        }
+
+        .chart-responsive-pie {
+          min-height: 300px;
         }
 
         .chart-title {
@@ -1029,9 +1078,16 @@ export default function AnalyticsPage() {
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
+        .table-scroll {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
         .utilization-table table,
         .equipment-table table {
           width: 100%;
+          min-width: 640px;
           border-collapse: collapse;
         }
 
@@ -1309,6 +1365,23 @@ export default function AnalyticsPage() {
           .utilization-chart {
             height: 300px;
           }
+
+          .chart-responsive-wide {
+            min-width: 520px;
+          }
+
+          .chart-responsive {
+            min-height: 260px;
+          }
+
+          .chart-responsive-pie {
+            min-height: 260px;
+          }
+
+          .utilization-table table,
+          .equipment-table table {
+            min-width: 560px;
+          }
         }
 
         @media (max-width: 480px) {
@@ -1331,6 +1404,23 @@ export default function AnalyticsPage() {
 
           .chart-card {
             padding: 1rem;
+          }
+
+          .chart-responsive-wide {
+            min-width: 480px;
+          }
+
+          .chart-responsive {
+            min-height: 240px;
+          }
+
+          .chart-responsive-pie {
+            min-height: 240px;
+          }
+
+          .utilization-table table,
+          .equipment-table table {
+            min-width: 520px;
           }
 
           .customer-item {

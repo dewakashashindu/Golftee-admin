@@ -391,7 +391,8 @@ export default function HomePage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 3rem 8rem;
+          gap: 2rem;
+          padding: clamp(1rem, 3vw, 3rem) clamp(1rem, 6vw, 8rem);
         }
         
         .text-section {
@@ -400,16 +401,17 @@ export default function HomePage() {
         }
         
         .main-title {
-          font-size: 10rem;
+          font-size: clamp(3.5rem, 12vw, 10rem);
           font-weight: 700;
           margin-bottom: 3rem;
           color: #111;
           line-height: 0.9;
           letter-spacing: -0.02em;
+          word-break: break-word;
         }
         
         .main-description {
-          font-size: 1.25rem;
+          font-size: clamp(1rem, 2.5vw, 1.25rem);
           color: #374151;
           margin-bottom: 4rem;
           line-height: 1.6;
@@ -419,6 +421,7 @@ export default function HomePage() {
         .button-group {
           display: flex;
           gap: 2rem;
+          flex-wrap: wrap;
           margin-bottom: 4rem;
         }
 
@@ -438,6 +441,7 @@ export default function HomePage() {
           transition: color 0.5s;
           cursor: pointer;
           border-radius: 30px;
+          white-space: nowrap;
         }
         .blob-btn:before {
           content: "";
@@ -512,17 +516,18 @@ export default function HomePage() {
           justify-content: flex-end;
           align-items: flex-end;
           position: relative;
+          min-width: 0;
         }
         
         .illustration-container {
-          position: absolute;
-          bottom: -250;
+          position: relative;
           right: 0;
           max-width: 35rem;
+          width: 100%;
         }
         
         .main-illustration {
-          width: 110%;
+          width: min(100%, 560px);
           height: auto;
           object-fit: contain;
         }
@@ -814,6 +819,7 @@ export default function HomePage() {
             flex-direction: column;
             text-align: center;
             gap: 3rem;
+            padding: 2rem;
           }
           
           .text-section {
@@ -825,6 +831,10 @@ export default function HomePage() {
           }
           
           .illustration-section {
+            justify-content: center;
+          }
+
+          .button-group {
             justify-content: center;
           }
 
@@ -862,6 +872,7 @@ export default function HomePage() {
           
           .main-content {
             padding: 2rem;
+            gap: 1.5rem;
           }
           
           .main-title {
@@ -870,6 +881,20 @@ export default function HomePage() {
           
           .main-description {
             font-size: 1.125rem;
+            margin-bottom: 2rem;
+          }
+
+          .button-group {
+            width: 100%;
+            gap: 1rem;
+            margin-bottom: 2rem;
+          }
+
+          .blob-btn {
+            width: min(100%, 320px);
+            margin-bottom: 0;
+            padding: 14px 24px;
+            font-size: 14px;
           }
 
           .footer-content {
@@ -901,6 +926,48 @@ export default function HomePage() {
           .social-icons {
             justify-content: center;
             gap: 1.5rem;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .main-content {
+            padding: 1rem;
+          }
+
+          .main-title {
+            margin-bottom: 1.5rem;
+          }
+
+          .main-description {
+            margin-bottom: 1.5rem;
+          }
+
+          .blob-btn {
+            width: 100%;
+            max-width: 100%;
+          }
+
+          .illustration-container {
+            max-width: 22rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .main-content {
+            padding: 0.75rem;
+          }
+
+          .button-group {
+            gap: 0.75rem;
+          }
+
+          .blob-btn {
+            font-size: 13px;
+            padding: 12px 18px;
+          }
+
+          .illustration-container {
+            max-width: 18rem;
           }
         }
       `}</style>

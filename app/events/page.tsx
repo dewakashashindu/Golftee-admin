@@ -30,6 +30,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
@@ -51,6 +52,16 @@ export default function EventsPage() {
 
   useEffect(() => {
     setEvents([...mockEvents]);
+  }, []);
+
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
   }, []);
 
   function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -253,9 +264,9 @@ export default function EventsPage() {
         <div style={{
           maxWidth: '900px',
           margin: '2rem auto',
-          padding: '3rem',
+          padding: isMobile ? '1rem' : '3rem',
           background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,250,252,0.9))',
-          borderRadius: '24px',
+          borderRadius: isMobile ? '16px' : '24px',
           position: 'relative',
           zIndex: 1,
           backdropFilter: 'blur(20px)',
@@ -263,7 +274,7 @@ export default function EventsPage() {
           border: '1px solid rgba(255,255,255,0.3)'
         }}>
           <h1 style={{
-            fontSize: '3rem',
+            fontSize: isMobile ? '2rem' : '3rem',
             marginBottom: '2rem',
             background: 'linear-gradient(135deg, #059669 0%, #16a34a 50%, #22c55e 100%)',
             backgroundClip: 'text',
@@ -325,14 +336,14 @@ export default function EventsPage() {
                 gap: '1rem',
                 marginBottom: '2rem',
                 background: 'rgba(240, 253, 244, 0.8)',
-                padding: '1.5rem',
+                padding: isMobile ? '1rem' : '1.5rem',
                 borderRadius: '15px',
                 backdropFilter: 'blur(5px)',
                 border: '1px solid rgba(22, 163, 74, 0.1)'
               }}
               onSubmit={handleCreateEvent}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                 <input
                   name="title"
                   placeholder="Event/Tournament Name *"
@@ -365,7 +376,7 @@ export default function EventsPage() {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                 <input
                   name="start_date"
                   type="date"
@@ -427,7 +438,7 @@ export default function EventsPage() {
                 }}
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                 <input
                   name="registration_deadline"
                   type="date"
@@ -618,7 +629,7 @@ export default function EventsPage() {
                   background: 'linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
                   borderRadius: '20px',
                   boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-                  padding: '2rem',
+                  padding: isMobile ? '1rem' : '2rem',
                   border: '1px solid rgba(16, 185, 129, 0.15)',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   position: 'relative',
@@ -633,15 +644,16 @@ export default function EventsPage() {
                     height: '4px',
                     background: `linear-gradient(90deg, ${getStatusColor(event.status)}, ${getStatusColor(event.status)}AA)`
                   }} />
-                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row' }}>
+                    <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: '1rem', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '0.75rem' : 0 }}>
                         <h2 style={{
-                          fontSize: '1.8rem',
+                          fontSize: isMobile ? '1.35rem' : '1.8rem',
                           fontWeight: '700',
                           color: '#059669',
                           margin: 0,
-                          textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          wordBreak: 'break-word'
                         }}>{event.name}</h2>
                         <span style={{
                           background: getStatusColor(event.status),
@@ -670,10 +682,10 @@ export default function EventsPage() {
                       </span>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
+                      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                       gap: '1rem',
-                      margin: '1.5rem 0',
-                      padding: '1.5rem',
+                      margin: '1rem 0',
+                      padding: isMobile ? '1rem' : '1.5rem',
                       background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(236, 253, 245, 0.6))',
                       borderRadius: '16px',
                       border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -681,7 +693,7 @@ export default function EventsPage() {
                     }}>
                       <p style={{
                         margin: 0,
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '0.95rem' : '1rem',
                         color: '#1f2937',
                         fontWeight: '500',
                         display: 'flex',
@@ -691,30 +703,30 @@ export default function EventsPage() {
                         borderRadius: '8px',
                         transition: 'all 0.2s ease'
                       }}><strong>📅 Date:</strong> {event.date}</p>
-                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                      <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                         <strong>🕐 Time:</strong> {event.time}
                       </p>
-                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                      <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                         <strong>📍 Location:</strong> {event.location}
                       </p>
                       {event.format && (
-                        <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                           <strong>🏌️ Format:</strong> {event.format}
                         </p>
                       )}
-                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                      <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                         <strong>👥 Max Participants:</strong> {event.maxParticipants}
                       </p>
-                      <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                      <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                         <strong>💰 Entry Fee:</strong> {event.entryFee}
                       </p>
                       {event.prizePool && (
-                        <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                           <strong>🏆 Prize Pool:</strong> {event.prizePool}
                         </p>
                       )}
                       {event.registrationDeadline && (
-                        <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937', fontWeight: '500' }}>
+                        <p style={{ margin: 0, fontSize: isMobile ? '0.95rem' : '1rem', color: '#1f2937', fontWeight: '500', wordBreak: 'break-word' }}>
                           <strong>⏰ Reg. Deadline:</strong> {event.registrationDeadline}
                         </p>
                       )}
@@ -734,13 +746,13 @@ export default function EventsPage() {
                       }}>{event.description}</p>
                     )}
                     
-                    <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexDirection: isMobile ? 'column' : 'row' }}>
                       <button 
                         style={{
-                          padding: '0.75rem 1.5rem',
+                          padding: isMobile ? '0.7rem 1rem' : '0.75rem 1.5rem',
                           border: 'none',
                           borderRadius: '12px',
-                          fontSize: '1rem',
+                          fontSize: isMobile ? '0.95rem' : '1rem',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -748,7 +760,8 @@ export default function EventsPage() {
                           overflow: 'hidden',
                           background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%)',
                           color: 'white',
-                          boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
+                          boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)',
+                          width: isMobile ? '100%' : 'auto'
                         }}
                         onClick={() => handleEditEvent(event)}
                         disabled={loading}
@@ -757,10 +770,10 @@ export default function EventsPage() {
                       </button>
                       <button 
                         style={{
-                          padding: '0.75rem 1.5rem',
+                          padding: isMobile ? '0.7rem 1rem' : '0.75rem 1.5rem',
                           border: 'none',
                           borderRadius: '12px',
-                          fontSize: '1rem',
+                          fontSize: isMobile ? '0.95rem' : '1rem',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -768,7 +781,8 @@ export default function EventsPage() {
                           overflow: 'hidden',
                           background: 'linear-gradient(135deg, #ef4444 0%, #f87171 50%, #dc2626 100%)',
                           color: 'white',
-                          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+                          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)',
+                          width: isMobile ? '100%' : 'auto'
                         }}
                         onClick={() => handleDeleteEvent(event.id)}
                         disabled={loading}
@@ -778,7 +792,7 @@ export default function EventsPage() {
                     </div>
                   </div>
                   {event.poster && (
-                    <div style={{ flexShrink: 0, width: '150px' }}>
+                    <div style={{ flexShrink: 0, width: isMobile ? '100%' : '150px', maxWidth: isMobile ? '220px' : '150px', margin: isMobile ? '0 auto' : '0' }}>
                       <img 
                         src={event.poster} 
                         alt={`${event.name} poster`} 
@@ -797,218 +811,6 @@ export default function EventsPage() {
             )}
           </div>
         </div>
-
-
-
-      <style>{`
-        @media (max-width: 1024px) {
-          .events-container {
-            max-width: 90% !important;
-            padding: 2rem !important;
-            margin: 1rem auto !important;
-          }
-          
-          .tournament-details {
-            grid-template-columns: 1fr !important;
-            gap: 0.75rem !important;
-          }
-          
-          .tournament-content {
-            flex-direction: column !important;
-            gap: 1rem !important;
-          }
-          
-          .tournament-poster {
-            width: 100% !important;
-            max-width: 200px !important;
-            margin: 0 auto !important;
-          }
-          
-          .navigation {
-            padding: 1.5rem 2rem !important;
-          }
-          
-          .nav-links {
-            gap: 2rem !important;
-          }
-          
-          .footer-content {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 2rem !important;
-            padding: 2rem !important;
-          }
-          
-          .footer-about {
-            grid-column: span 2 !important;
-            max-width: 100% !important;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .navigation {
-            padding: 1rem !important;
-            flex-direction: column !important;
-            gap: 1rem !important;
-          }
-          
-          .nav-links {
-            flex-wrap: wrap !important;
-            gap: 1rem !important;
-            justify-content: center !important;
-          }
-          
-          .nav-link {
-            font-size: 1rem !important;
-            padding: 0.25rem 0.5rem !important;
-          }
-          
-          .profile-section {
-            margin-top: 1rem !important;
-          }
-          
-          .events-container {
-            margin: 1rem !important;
-            padding: 1.5rem !important;
-            border-radius: 16px !important;
-          }
-          
-          .page-title {
-            font-size: 2rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          
-          .create-btn {
-            padding: 0.75rem 2rem !important;
-            font-size: 1rem !important;
-            margin-bottom: 2rem !important;
-          }
-          
-          .tournament-form {
-            padding: 1rem !important;
-            gap: 0.75rem !important;
-          }
-          
-          .tournament-form input,
-          .tournament-form textarea {
-            padding: 0.6rem !important;
-            font-size: 0.9rem !important;
-          }
-          
-          .tournament-card {
-            padding: 1.5rem !important;
-            margin-bottom: 1rem !important;
-          }
-          
-          .tournament-name {
-            font-size: 1.5rem !important;
-          }
-          
-          .tournament-details {
-            padding: 1rem !important;
-            gap: 0.5rem !important;
-          }
-          
-          .tournament-details p {
-            font-size: 0.85rem !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-          }
-          
-          .tournament-actions {
-            flex-direction: column !important;
-            gap: 0.5rem !important;
-          }
-          
-          .action-btn {
-            padding: 0.6rem 1rem !important;
-            font-size: 0.9rem !important;
-            width: 100% !important;
-          }
-          
-          .notification-card {
-            width: 90vw !important;
-            left: 5vw !important;
-            transform: none !important;
-          }
-          
-          .profile-card {
-            width: 90vw !important;
-            right: 5vw !important;
-          }
-          
-          .footer-content {
-            grid-template-columns: 1fr !important;
-            text-align: center !important;
-            padding: 1.5rem !important;
-            gap: 2rem !important;
-          }
-          
-          .footer-about {
-            grid-column: span 1 !important;
-          }
-          
-          .footer-brand {
-            font-size: 1.3rem !important;
-          }
-          
-          .social-icons {
-            justify-content: center !important;
-            gap: 1rem !important;
-          }
-          
-          .footer-bottom {
-            flex-direction: column !important;
-            gap: 1rem !important;
-            text-align: center !important;
-            padding: 1.5rem !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .bg-circle-left,
-          .bg-circle-right {
-            display: none !important;
-          }
-          
-          .navigation {
-            padding: 0.75rem !important;
-          }
-          
-          .nav-links {
-            font-size: 0.85rem !important;
-          }
-          
-          .events-container {
-            margin: 0.5rem !important;
-            padding: 1rem !important;
-          }
-          
-          .page-title {
-            font-size: 1.75rem !important;
-          }
-          
-          .tournament-card {
-            padding: 1rem !important;
-          }
-          
-          .tournament-details {
-            padding: 0.75rem !important;
-          }
-          
-          .footer-content {
-            padding: 1rem !important;
-          }
-          
-          .social-icons {
-            gap: 0.75rem !important;
-          }
-          
-          .social-icon {
-            width: 35px !important;
-            height: 35px !important;
-          }
-        }}
-      `}</style>
     </div>
     
     <Footer />
